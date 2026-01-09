@@ -3,12 +3,12 @@ export class SnowEffect {
     this.running = false;
     this.flakes = [];
 
-    // Configurable realism parameters
-    this.maxFlakes = options.maxFlakes || 2000;
-    this.gravity = options.gravity || 35;        // px/sec²
-    this.baseFallSpeed = options.baseFallSpeed || 45; // px/sec
+    // Config parameters
+    this.maxFlakes = options.maxFlakes || 250;
+    this.gravity = options.gravity || 20;
+    this.baseFallSpeed = options.baseFallSpeed || 30;
 
-    // Wind state
+    // Wind configuration
     this.wind = {
       target: 0,
       current: 0,
@@ -16,9 +16,12 @@ export class SnowEffect {
     };
 
     this.lastTime = 0;
+    this.paused = false;
 
+    // Binding
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
+    this.handleVisibility = this.handleVisibility.bind(this);
   }
 
   start() {
@@ -37,9 +40,10 @@ export class SnowEffect {
     });
 
     document.body.appendChild(this.canvas);
-    this.resize();
 
+    this.resize();
     window.addEventListener("resize", this.resize);
+    document.addEventListener("visibilitychange", this.handleVisibility);
 
     this.lastTime = performance.now();
     this.loop(this.lastTime);
@@ -47,11 +51,23 @@ export class SnowEffect {
 
   stop() {
     this.running = false;
+
     cancelAnimationFrame(this.raf);
     window.removeEventListener("resize", this.resize);
+    document.removeEventListener("visibilitychange", this.handleVisibility);
 
     this.flakes = [];
     this.canvas?.remove();
+  }
+
+  handleVisibility() {
+    if (document.hidden) {
+      this.paused = true;
+    } else {
+      this.paused = false;
+      // Reset lastTime to avoid giant delta after switching tabs
+      this.lastTime = performance.now();
+    }
   }
 
   resize() {
@@ -74,7 +90,7 @@ export class SnowEffect {
 
     // Change wind direction every few seconds
     if (this.wind.changeTimer <= 0) {
-      this.wind.target = (Math.random() * 2 - 1) * 15; // slow wind
+      this.wind.target = (Math.random() * 2 - 1) * 15;  // slow wind
       this.wind.changeTimer = 3 + Math.random() * 4;
     }
 
@@ -85,8 +101,17 @@ export class SnowEffect {
   loop(now) {
     if (!this.running) return;
 
-    const delta = (now - this.lastTime) / 1000; // seconds
+    let delta = (now - this.lastTime) / 1000;
     this.lastTime = now;
+
+    // Prevent massive jumps when tab is inactive
+    delta = Math.min(delta, 0.03);
+
+    if (this.paused) {
+      // Skip physics but keep the animation loop alive
+      this.raf = requestAnimationFrame(this.loop);
+      return;
+    }
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
