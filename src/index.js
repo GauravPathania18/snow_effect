@@ -1,6 +1,13 @@
-import { effectManager } from "./core/EffectManager.js";
-import { SnowEffect } from "./core/SnowEffect.js";
-import { createSnowButton } from "./ui/createSnowButton.js";
+/**
+ * UIEffects - Main Entry Point
+ * Bundles all effects and provides a clean public API
+ */
+
+import { effectManager } from './core/EffectManager.js';
+import { SnowEffect } from './core/SnowEffect.js';
+import { createSnowButton } from './ui/components/SnowButton.js';
+import { initializeWindControls } from './ui/components/WindControls.js';
+import { EFFECT_MODES } from './config/settings.js';
 
 // Browser compatibility check
 (() => {
@@ -19,29 +26,35 @@ import { createSnowButton } from "./ui/createSnowButton.js";
   }
 })();
 
-effectManager.register("snow", new SnowEffect());
+// Initialize effect manager with snow effect
+effectManager.register('snow', new SnowEffect());
 
 // Cleanup on page unload
-window.addEventListener("beforeunload", () => {
+window.addEventListener('beforeunload', () => {
   effectManager.cleanup();
 });
 
 // ============================================================================
-// CONVENIENCE API - Expose commonly used methods
+// PUBLIC API
 // ============================================================================
 const snow = effectManager.effects.snow;
 
-const UIEffects = {
+export const UIEffects = {
+  // UI Components
   createSnowButton,
+  initializeWindControls,
+  
+  // Core instances
   effectManager,
+  snow,
 
-  // Simple wind mode control
+  // Wind mode control
   setSnowWindMode: (mode) => {
     if (!snow) {
       console.error('[UIEffects] Snow effect not initialized');
       return;
     }
-    if (!['calm', 'windy', 'blizzard'].includes(mode)) {
+    if (!Object.values(EFFECT_MODES).includes(mode)) {
       console.warn(`[UIEffects] Invalid wind mode: ${mode}. Use 'calm', 'windy', or 'blizzard'`);
       return;
     }
@@ -58,24 +71,26 @@ const UIEffects = {
     effectManager.disable('snow');
   },
 
-  // Get current performance metrics (for debugging)
+  // Get performance metrics for debugging
   getMetrics: () => {
     if (!snow) return null;
     return snow.getPerformanceMetrics();
   },
 
-  // Enable verbose logging
+  // Debug mode flag
   debug: false
 };
 
+// Export components
 export {
   createSnowButton,
-  effectManager,
-  UIEffects as default
+  initializeWindControls,
+  effectManager
 };
 
 // Make globally available when bundled
 if (typeof window !== 'undefined') {
   window.UIEffects = UIEffects;
 }
-     
+
+export default UIEffects;

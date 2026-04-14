@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Snow Example - UIEffects</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    p {
+      color: #666;
+      font-size: 1.1em;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    button.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button.secondary {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    button.secondary:hover {
+      background: #f5f5f5;
+      transform: translateY(-2px);
+    }
+
+    .info {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      text-align: left;
+      border-radius: 8px;
+      margin-top: 30px;
+      font-size: 0.95em;
+      color: #444;
+    }
+
+    .info strong {
+      color: #667eea;
+    }
+
+    .metrics {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      text-align: left;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .metric-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .metric-item:last-child {
+      border-bottom: none;
+    }
+
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: #d63384;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>❄️ UIEffects Snow</h1>
+    <p>Click below to add beautiful snow to your page!</p>
+
+    <div class="buttons">
+      <button class="primary" id="startBtn">Start Snow</button>
+      <button class="secondary" id="stopBtn" disabled>Stop Snow</button>
+    </div>
+
+    <div class="info">
+      <strong>Wind Modes:</strong>
+      <div style="margin-top: 10px;">
+        <button class="secondary" id="calmBtn" style="width: 100%; margin-bottom: 8px;">Calm</button>
+        <button class="secondary" id="windyBtn" style="width: 100%; margin-bottom: 8px;">Windy</button>
+        <button class="secondary" id="blizzardBtn" style="width: 100%;">Blizzard</button>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics" style="display: none;">
+      <strong>Performance Metrics:</strong>
+      <div class="metric-item">
+        <span>FPS:</span>
+        <span id="fpsValue">--</span>
+      </div>
+      <div class="metric-item">
+        <span>Flake Count:</span>
+        <span id="flakeValue">--</span>
+      </div>
+      <div class="metric-item">
+        <span>Accumulation Height:</span>
+        <span id="accHeight">--</span>
+      </div>
+    </div>
+
+    <div class="info" style="margin-top: 20px;">
+      <strong>💡 Tip:</strong> UIEffects automatically creates a toggle button by default.
+      Try hovering over the bottom-right corner of the screen!
+    </div>
+  </div>
+
+  <!-- UIEffects Library -->
+  <script src="../dist/ui-effects.min.js"></script>
+
+  <script>
+    // Get UI elements
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const calmBtn = document.getElementById('calmBtn');
+    const windyBtn = document.getElementById('windyBtn');
+    const blizzardBtn = document.getElementById('blizzardBtn');
+    const metricsDiv = document.getElementById('metrics');
+
+    let isSnowing = false;
+
+    // Start snow
+    startBtn.addEventListener('click', () => {
+      UIEffects.startSnow();
+      isSnowing = true;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      metricsDiv.style.display = 'block';
+      startMonitoring();
+    });
+
+    // Stop snow
+    stopBtn.addEventListener('click', () => {
+      UIEffects.stopSnow();
+      isSnowing = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      metricsDiv.style.display = 'none';
+      stopMonitoring();
+    });
+
+    // Wind modes
+    calmBtn.addEventListener('click', () => {
+      UIEffects.setSnowWindMode('calm');
+      updateActiveButton(calmBtn);
+    });
+
+    windyBtn.addEventListener('click', () => {
+      UIEffects.setSnowWindMode('windy');
+      updateActiveButton(windyBtn);
+    });
+
+    blizzardBtn.addEventListener('click', () => {
+      UIEffects.setSnowWindMode('blizzard');
+      updateActiveButton(blizzardBtn);
+    });
+
+    // Update active button styling
+    function updateActiveButton(button) {
+      [calmBtn, windyBtn, blizzardBtn].forEach(btn => {
+        btn.style.background = 'white';
+        btn.style.color = '#667eea';
+      });
+      button.style.background = '#667eea';
+      button.style.color = 'white';
+    }
+
+    // Monitor performance
+    let monitorInterval;
+
+    function startMonitoring() {
+      // Set default wind mode as active
+      updateActiveButton(windyBtn);
+
+      monitorInterval = setInterval(() => {
+        if (isSnowing) {
+          const metrics = UIEffects.getMetrics();
+          if (metrics) {
+            document.getElementById('fpsValue').textContent = metrics.fps;
+            document.getElementById('flakeValue').textContent = metrics.flakeCount;
+            document.getElementById('accHeight').textContent = 
+              metrics.accumulationHeight.toFixed(0) + ' px';
+          }
+        }
+      }, 500);
+    }
+
+    function stopMonitoring() {
+      if (monitorInterval) {
+        clearInterval(monitorInterval);
+      }
+    }
+
+    // Create the default toggle button
+    UIEffects.createSnowButton();
+  </script>
+</body>
+</html>

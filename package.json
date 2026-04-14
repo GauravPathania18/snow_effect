@@ -8,7 +8,7 @@
     "url": ""
   },
   "scripts": {
-    "start": "npm run build && npx http-server -c-1 -o test.html",
+    "start": "npm run build && npx http-server . -c-1 -p 3000 -o public/index.html",
     "test": "node tests/smoke.test.js",
     "build": "esbuild src/index.js --bundle --minify --sourcemap --format=iife --global-name=UIEffects --outfile=dist/ui-effects.min.js",
     "build:dev": "esbuild src/index.js --bundle --format=iife --global-name=UIEffects --outfile=dist/ui-effects.js",

@@ -1,514 +1,291 @@
+/**
+ * Snow Effect - Main Orchestrator
+ * Coordinates all snow animation systems
+ */
+
+import { ParticleSystem } from './ParticleSystem.js';
+import { WindSystem } from './WindSystem.js';
+import { AccumulationSystem } from './AccumulationSystem.js';
+import { BackgroundDetection } from './BackgroundDetection.js';
+
 export class SnowEffect {
   constructor(options = {}) {
+    // Configuration
+    this.maxFlakes = options.maxFlakes || 2000;
+    this.gravity = options.gravity || 18;
+    this.windStrength = options.windStrength || 16;
+    this.windEffect = options.windEffect || 2.0;
+    this.swingAmplitude = options.swingAmplitude || 1.0;
 
-    // -------------------------------------------------------------------------
-    // PERFORMANCE-BALANCED SETTINGS
-    // -------------------------------------------------------------------------
-    this.maxFlakes = options.maxFlakes || 2000;      // Total flakes on screen
-    this.gravity = options.gravity || 18;           // Downward force
-    this.windStrength = options.windStrength || 16;  // Max wind speed
-
-    // Depth layers for realism
+    // Depth layers for visual realism
     this.layers = {
-      back:  { speed: 0.5, size: 0.6, opacity: 0.4 },
-      mid:   { speed: 0.8, size: 0.9, opacity: 0.7 },
+      back: { speed: 0.5, size: 0.6, opacity: 0.4 },
+      mid: { speed: 0.8, size: 0.9, opacity: 0.7 },
       front: { speed: 1.2, size: 1.3, opacity: 1.0 }
     };
 
-    // Wind multiplier to amplify effect visually
-    this.windEffect = 2.0;
+    // Initialize subsystems
+    this.particles = new ParticleSystem({
+      layers: this.layers,
+      maxFlakes: this.maxFlakes
+    });
 
-    // -------------------------------------------------------------------------
-    // STATE CONTAINERS
-    // -------------------------------------------------------------------------
-    this.flakes = [];
+    this.wind = new WindSystem(this.windStrength);
+    this.accumulation = new AccumulationSystem();
 
-    // Wind starts immediately (fixed slow start issue)
-    this.wind = {
-      current: (Math.random() * 2 - 1) * this.windStrength,
-      target:  (Math.random() * 2 - 1) * this.windStrength,
-      timer:   2 + Math.random() * 2
-    };
-
-    // Flag for strong wind interpolation during startup
-    this.initializingWind = true;
-
-    // Accumulation height map
-    this.accumulation = []; 
-    // Engine State 
+    // Engine state
     this.running = false;
     this.paused = false;
     this.lastTime = 0;
+    this.raf = null;
+
+    // Canvas
+    this.canvas = null;
+    this.ctx = null;
 
     // Performance monitoring
     this.frameCount = 0;
     this.fps = 60;
     this.fpsCheckTime = 0;
-    this.fpsUpdateInterval = 1000; // Check FPS every 1 second
+    this.fpsUpdateInterval = 1000;
+    this.accumulationFrameSkip = 0;
 
-     // Adaptive snow color (default - will be updated based on background)
-    this.snowColor = "rgba(255,255,255,0.95)";
+    // Adaptive snow color
+    this.snowColor = 'rgba(255,255,255,0.95)';
 
-    // Bind event methods
+    // Bind methods
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
     this.handleVisibility = this.handleVisibility.bind(this);
   }
 
+  // ========================================================================
+  // LIFECYCLE
+  // ========================================================================
 
-  // ==========================================================================
-  // PERFORMANCE MONITORING & ADAPTIVE SETTINGS
-  // ==========================================================================
-  updateFrameRate(delta) {
-    this.frameCount++;
-    this.fpsCheckTime += delta * 1000;
-
-    if (this.fpsCheckTime >= this.fpsUpdateInterval) {
-      this.fps = Math.round(this.frameCount / (this.fpsCheckTime / 1000));
-      
-      // Auto-reduce flakes if FPS drops below 30
-      if (this.fps < 30 && this.flakes.length > 500) {
-        const reduction = Math.floor(this.flakes.length * 0.2); // Remove 20%
-        this.flakes.splice(0, reduction);
-        console.warn(`[SnowEffect] FPS low (${this.fps}) - removed ${reduction} flakes for performance`);
-      }
-      
-      // Auto-increase flakes if FPS is healthy and we're below 80% max
-      if (this.fps > 50 && this.flakes.length < this.maxFlakes * 0.8) {
-        const increase = Math.floor(this.maxFlakes * 0.1); // Add 10%
-        for (let i = 0; i < increase; i++) {
-          const randomLayer = Object.keys(this.layers)[Math.floor(Math.random() * Object.keys(this.layers).length)];
-          this.flakes.push(this.spawnFlake(randomLayer));
-        }
-      }
-
-      this.frameCount = 0;
-      this.fpsCheckTime = 0;
-    }
-  }
-
-  // Get current FPS (for debugging)
-  getPerformanceMetrics() {
-    return {
-      fps: this.fps,
-      flakeCount: this.flakes.length,
-      accumulationHeight: Math.max(...this.accumulation)
-    };
-  }
-
-
-  // ==========================================================================
-  // START SNOW EFFECT
-  // ==========================================================================
   start() {
     if (this.running) return;
     this.running = true;
 
-    // Check browser support
+    // Browser support check
     if (!window.requestAnimationFrame) {
-      console.warn('[SnowEffect] requestAnimationFrame not supported - animation disabled');
+      console.warn(
+        '[SnowEffect] requestAnimationFrame not supported - animation disabled'
+      );
       return;
     }
 
-    // Create fullscreen canvas overlay
     try {
-      this.canvas = document.createElement("canvas");
-      if (!this.canvas) {
-        console.error('[SnowEffect] Canvas element creation failed');
-        this.running = false;
-        return;
+      // Create canvas
+      this.canvas = document.createElement('canvas');
+      this.ctx = this.canvas.getContext('2d');
+
+      if (!this.canvas || !this.ctx) {
+        throw new Error('Canvas initialization failed');
       }
 
-      this.ctx = this.canvas.getContext("2d");
-      if (!this.ctx) {
-        console.error('[SnowEffect] 2D context unavailable');
-        this.running = false;
-        return;
-      }
-    } catch (err) {
-      console.error('[SnowEffect] Canvas initialization failed:', err);
-      this.running = false;
-      return;
-    }
+      // Style canvas
+      Object.assign(this.canvas.style, {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        pointerEvents: 'none',
+        zIndex: 9999
+      });
 
-    Object.assign(this.canvas.style, {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      pointerEvents: "none",
-      zIndex: 9999
-    });
-
-    try {
       document.body.appendChild(this.canvas);
     } catch (err) {
-      console.error('[SnowEffect] Failed to append canvas to DOM:', err);
+      console.error('[SnowEffect] Failed to initialize canvas:', err);
       this.running = false;
       return;
     }
-
-    // Randomize wind every time effect starts
-    this.wind.current = (Math.random() * 2 - 1) * this.windStrength;
-    this.wind.target  = (Math.random() * 2 - 1) * this.windStrength;
-    this.wind.timer   = 2 + Math.random() * 2;
-
-    // Strong wind mode for first second
-    this.initializingWind = true;
-    setTimeout(() => (this.initializingWind = false), 800);
 
     // Setup
     this.resize();
-    window.addEventListener("resize", this.resize);
-    document.addEventListener("visibilitychange", this.handleVisibility);
-    window.addEventListener("beforeunload", () => this.stop());
+    window.addEventListener('resize', this.resize);
+    document.addEventListener('visibilitychange', this.handleVisibility);
+    window.addEventListener('beforeunload', () => this.stop());
 
-    this.createFlakes();
-    this.initAccumulation();
+    // Initialize particles and systems
+    this.particles.createFlakes(this.canvas.width, this.canvas.height);
+    this.accumulation.init(this.canvas.width);
 
-    // Detect background & update snow color once
-    const bg = this.detectBackground();
-    this.updateSnowColor(bg);
+    // Detect and set snow color
+    const brightness = BackgroundDetection.detectBrightness();
+    this.snowColor = BackgroundDetection.getSnowColor(brightness);
+
+    this.wind.reset();
 
     this.lastTime = performance.now();
     this.loop(this.lastTime);
   }
 
-
-  // ==========================================================================
-  // STOP SNOW EFFECT
-  // ==========================================================================
   stop() {
     this.running = false;
-    cancelAnimationFrame(this.raf);
+    if (this.raf) cancelAnimationFrame(this.raf);
 
-    window.removeEventListener("resize", this.resize);
-    document.removeEventListener("visibilitychange", this.handleVisibility);
-    window.removeEventListener("beforeunload", () => this.stop());
+    window.removeEventListener('resize', this.resize);
+    document.removeEventListener('visibilitychange', this.handleVisibility);
+    window.removeEventListener('beforeunload', () => this.stop());
 
     this.canvas?.remove();
-    this.flakes = [];
-    this.accumulation = [];
+    this.particles.clear();
+    this.accumulation.clear();
+
+    this.canvas = null;
+    this.ctx = null;
   }
 
-
-  // ==========================================================================
-  // HANDLE TAB VISIBILITY
-  // ==========================================================================
   handleVisibility() {
     if (document.hidden) {
       this.paused = true;
     } else {
       this.paused = false;
-      this.lastTime = performance.now(); // avoid delta spike
+      this.lastTime = performance.now(); // Avoid delta spike
     }
   }
 
-
-  // ==========================================================================
-  // RESIZE CANVAS + RESET ACCUMULATION
-  // ==========================================================================
   resize() {
     if (!this.canvas) return;
 
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
-    this.initAccumulation(); // rebuild accumulation map
 
-    // Update snow color on background change
-    const bg = this.detectBackground();
-    this.updateSnowColor(bg);
+    this.accumulation.init(this.canvas.width);
+
+    // Update snow color on resize (background might have changed)
+    const brightness = BackgroundDetection.detectBrightness();
+    this.snowColor = BackgroundDetection.getSnowColor(brightness);
   }
 
-
-  // ==========================================================================
-  // DETECT BACKGROUND BRIGHTNESS FOR ADAPTIVE SNOW COLOR
-  // ==========================================================================
-  detectBackground() {
-    try {
-      const bg = window.getComputedStyle(document.body).background;
-      if (!bg) return 255;
-
-      // CASE 1: solid color like rgb(), rgba()
-      if (bg.startsWith("rgb")) {
-        const match = bg.match(/\d+/g);
-        if (!match || match.length < 3) return 255;
-        const r = parseInt(match[0], 10);
-        const g = parseInt(match[1], 10);
-        const b = parseInt(match[2], 10);
-        return (0.299 * r + 0.587 * g + 0.114 * b);
-      }
-
-      // CASE 2: hex color like #AABBCC
-      if (bg.startsWith("#")) {
-        const hex = bg.replace("#", "");
-        if (hex.length < 6) return 255;
-        const bigint = parseInt(hex, 16);
-        const r = (bigint >> 16) & 255;
-        const g = (bigint >> 8) & 255;
-        const b = bigint & 255;
-        return (0.299 * r + 0.587 * g + 0.114 * b);
-      }
-
-      // CASE 3: linear-gradient(...)
-      if (bg.includes("gradient")) {
-        // Extract first color stop
-        const colorMatch = bg.match(/rgb[a]?\([^)]+\)|#[0-9A-Fa-f]{6}/);
-        if (!colorMatch) return 255;
-
-        const col = colorMatch[0];
-
-        // If rgb()
-        if (col.startsWith("rgb")) {
-          const nums = col.match(/\d+/g);
-          if (!nums || nums.length < 3) return 255;
-          const r = parseInt(nums[0], 10);
-          const g = parseInt(nums[1], 10);
-          const b = parseInt(nums[2], 10);
-          return (0.299 * r + 0.587 * g + 0.114 * b);
-        }
-
-        // If hex
-        if (col.startsWith("#")) {
-          const hex = col.replace("#", "");
-          if (hex.length < 6) return 255;
-          const bigint = parseInt(hex, 16);
-          const r = (bigint >> 16) & 255;
-          const g = (bigint >> 8) & 255;
-          const b = bigint & 255;
-          return (0.299 * r + 0.587 * g + 0.114 * b);
-        }
-      }
-
-      // Default fallback
-      return 255;
-    } catch (err) {
-      console.warn('[SnowEffect] Background detection failed, using fallback:', err);
-      return 255;
-    }
-  }
-
-
-  // ==========================================================================
-  // CREATE ALL LAYERED SNOWFLAKES
-  // ==========================================================================
-  createFlakes() {
-    const layers = Object.keys(this.layers);
-    const perLayer = Math.floor(this.maxFlakes / layers.length);
-
-    for (const layer of layers) {
-      for (let i = 0; i < perLayer; i++) {
-        this.flakes.push(this.spawnFlake(layer));
-      }
-    }
-  }
-
-
-  // Create individual flake
-  spawnFlake(layer) {
-    const cfg = this.layers[layer];
-
-    return {
-      layer,
-      x: Math.random() * this.canvas.width,
-      y: Math.random() * this.canvas.height,
-
-      r: (Math.random() * 2 + 1) * cfg.size,
-
-      vy: (Math.random() * 20 + 10) * cfg.speed,
-      vx: 0,
-
-      swingPhase: Math.random() * Math.PI * 2,
-      swingSpeed: 0.4 + Math.random() * 0.3
-    };
-  }
-
-
-  // ==========================================================================
-  // ACCUMULATION SYSTEM
-  // ==========================================================================
-  initAccumulation() {
-    this.accumulation = new Array(this.canvas.width).fill(0);
-  }
-
-  addToAccumulation(x, amount) {
-    const maxHeight = 60;
-    x = Math.floor(x);
-
-    if (x < 0 || x >= this.canvas.width) return;
-
-    this.accumulation[x] += amount;
-
-    // Spread a bit to neighbors for smoothing
-    const spread = amount * 0.3;
-    if (x > 0) this.accumulation[x - 1] += spread * 0.5;
-    if (x < this.canvas.width - 1) this.accumulation[x + 1] += spread * 0.5;
-
-    if (this.accumulation[x] > maxHeight) this.accumulation[x] = maxHeight;
-  }
-
-  smoothAccumulation() {
-    const arr = this.accumulation;
-    const smoothed = new Array(arr.length);
-
-    for (let i = 0; i < arr.length; i++) {
-      const L = arr[i - 1] || 0;
-      const C = arr[i];
-      const R = arr[i + 1] || 0;
-
-      smoothed[i] = L * 0.25 + C * 0.5 + R * 0.25;
-    }
-
-    this.accumulation = smoothed;
-  }
-
-  drawAccumulation() {
-    const ctx = this.ctx;
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
-    ctx.beginPath();
-
-    ctx.moveTo(0, this.canvas.height);
-
-    for (let x = 0; x < this.canvas.width; x++) {
-      ctx.lineTo(x, this.canvas.height - this.accumulation[x]);
-    }
-
-    ctx.lineTo(this.canvas.width, this.canvas.height);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-
-  // ==========================================================================
-  // WIND SYSTEM WITH FIXED SLOW-START PROBLEM
-  // ==========================================================================
-  updateWind(delta) {
-    this.wind.timer -= delta;
-
-    // Random new wind direction
-    if (this.wind.timer <= 0) {
-      this.wind.target = (Math.random() * 2 - 1) * this.windStrength;
-      this.wind.timer = 3 + Math.random() * 3;
-    }
-
-    // Use faster interpolation for first second
-    const smoothing = this.initializingWind ? 0.15 : 0.02;
-
-    this.wind.current += (this.wind.target - this.wind.current) * smoothing;
-  }
-
-
-  // ==========================================================================
+  // ========================================================================
   // MAIN LOOP
-  // ==========================================================================
+  // ========================================================================
+
   loop(now) {
     if (!this.running) return;
 
     let delta = (now - this.lastTime) / 1000;
     this.lastTime = now;
-    delta = Math.min(delta, 0.03);
+    delta = Math.min(delta, 0.03); // Cap delta to prevent large jumps
 
     if (this.paused) {
       this.raf = requestAnimationFrame(this.loop);
       return;
     }
 
+    // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.updateWind(delta);
+    // Update systems
+    this.wind.update(delta);
     this.updateFrameRate(delta);
-    this.updateAndDrawFlakes(delta);
 
-    this.smoothAccumulation();
-    this.drawAccumulation();
+    // Update and draw particles
+    this.particles.updateAndDraw(
+      delta,
+      this.ctx,
+      {
+        gravity: this.gravity,
+        windCurrent: this.wind.getCurrent(),
+        windEffect: this.windEffect,
+        swingAmplitude: this.swingAmplitude,
+        snowColor: this.snowColor
+      },
+      this.accumulation.accumulation,
+      this.canvas.width,
+      this.canvas.height
+    );
+
+    // Update and draw accumulation (throttled for performance)
+    if (this.accumulationFrameSkip++ % 6 === 0) {
+      this.accumulation.smooth();
+    }
+    this.accumulation.draw(this.ctx, this.canvas.width, this.canvas.height, this.snowColor);
+
+    // Draw FPS monitor
+    this.drawFPS();
 
     this.raf = requestAnimationFrame(this.loop);
   }
 
+  // ========================================================================
+  // PERFORMANCE MONITORING
+  // ========================================================================
 
-  // ==========================================================================
-  // UPDATE & DRAW SNOWFLAKES
-  // ==========================================================================
-  updateAndDrawFlakes(delta) {
-    if (!this.canvas || !this.ctx) return;
+  updateFrameRate(delta) {
+    this.frameCount++;
+    this.fpsCheckTime += delta * 1000;
 
-    const ctx = this.ctx;
+    if (this.fpsCheckTime >= this.fpsUpdateInterval) {
+      this.fps = Math.round(this.frameCount / (this.fpsCheckTime / 1000));
 
-    for (const f of this.flakes) {
-      const cfg = this.layers[f.layer];
+      // Adapt particle count to performance
+      this.particles.adaptToPerformance(
+        this.fps,
+        30, // fpsThresholdLow
+        50, // fpsThresholdHigh
+        this.maxFlakes
+      );
 
-      // Gravity
-      f.vy += this.gravity * cfg.speed * delta;
-
-      // Wind horizontal velocity
-      f.vx = this.wind.current * (cfg.speed*2);
-
-      // Side sway (sine wave)
-      f.swingPhase += f.swingSpeed * delta;
-      f.x += Math.sin(f.swingPhase) * 10 * delta;
-
-      // Apply velocities
-      f.x += f.vx * delta;
-      f.y += f.vy * delta;
-
-      // Horizontal wrapping
-      if (f.x > this.canvas.width) f.x = 0;
-      if (f.x < 0) f.x = this.canvas.width;
-
-      // Collision with accumulation mound
-      const accH = this.accumulation[Math.floor(f.x)];
-      if (f.y + f.r >= this.canvas.height - accH) {
-
-        this.addToAccumulation(f.x, f.r * 0.3);
-
-        // Respawn flake at top
-        f.y = -10;
-        f.vy = (Math.random() * 20 + 10) * cfg.speed;
-
-        continue;
-      }
-
-      // Draw flake with adaptive color
-      ctx.beginPath();
-      ctx.fillStyle = this.snowColor;
-      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-      ctx.fill();
+      this.frameCount = 0;
+      this.fpsCheckTime = 0;
     }
   }
 
-   // ===========================================================================
-  // UPDATE SNOW COLOR BASED ON BACKGROUND BRIGHTNESS
-  // ===========================================================================
-  updateSnowColor(brightness) {
-    if (brightness < 100) {
-      this.snowColor = "rgba(255,255,255,0.95)";   // Bright snow on dark background
-    } else if (brightness < 180) {
-      this.snowColor = "rgba(220,220,220,0.9)";    // Neutral snow
-    } else {
-      this.snowColor = "rgba(170,170,170,0.9)";    // Darker snow on bright background
-    }
+  drawFPS() {
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    this.ctx.font = 'bold 16px Arial';
+    this.ctx.fillText(`FPS: ${this.fps}`, 10, 26);
+    this.ctx.fillText(`Snow: ${this.particles.flakes.length}`, 10, 50);
   }
 
-   // ▼▼▼ WIND MODE API (CALM / WINDY / BLIZZARD) ▼▼▼
+  getPerformanceMetrics() {
+    return {
+      fps: this.fps,
+      flakeCount: this.particles.flakes.length,
+      accumulationHeight: this.accumulation.getMaxHeight()
+    };
+  }
+
+  // ========================================================================
+  // WIND MODE API
+  // ========================================================================
+
   setWindMode(mode) {
-    if (mode === "calm") {
-      this.windStrength = 2;
-      this.windEffect = 1.0;
-    }
-    if (mode === "windy") {
-      this.windStrength = 10;
-      this.windEffect = 2.0;
-    }
-    if (mode === "blizzard") {
-      this.windStrength = 20;
-      this.windEffect = 3.5;
+    const modes = {
+      calm: {
+        windStrength: 4,
+        windEffect: 0.6,
+        gravity: 16,
+        swingAmplitude: 1.0
+      },
+      windy: {
+        windStrength: 14,
+        windEffect: 1.8,
+        gravity: 18,
+        swingAmplitude: 1.0
+      },
+      blizzard: {
+        windStrength: 28,
+        windEffect: 4.0,
+        gravity: 25,
+        swingAmplitude: 1.6
+      }
+    };
+
+    const modeConfig = modes[mode];
+    if (!modeConfig) {
+      console.warn(`[SnowEffect] Unknown wind mode: ${mode}`);
+      return;
     }
 
-    // Apply new wind instantly
-    this.wind.current = (Math.random() * 2 - 1) * this.windStrength;
-    this.wind.target  = (Math.random() * 2 - 1) * this.windStrength;
-    this.wind.timer   = 1 + Math.random() * 1;
+    this.windStrength = modeConfig.windStrength;
+    this.windEffect = modeConfig.windEffect;
+    this.gravity = modeConfig.gravity;
+    this.swingAmplitude = modeConfig.swingAmplitude;
 
-    this.initializingWind = true;
-    setTimeout(() => (this.initializingWind = false), 800);
+    // Reset wind with new strength
+    this.wind.setStrength(this.windStrength);
   }
 }

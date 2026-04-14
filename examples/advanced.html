@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Control Example - UIEffects</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 2.5em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .panel h2 {
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    input[type='range'] {
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    button.active {
+      background: #4CAF50;
+      border-color: #45a049;
+    }
+
+    button.stop {
+      background: #f44336;
+      border-color: #da190b;
+    }
+
+    .value-display {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .metric-card {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.9em;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    .timeline {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .event-log {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      font-family: 'Courier New', monospace;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .event {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-left: 3px solid #4CAF50;
+      padding-left: 10px;
+    }
+
+    .timestamp {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>❄️ Advanced Snow Control</h1>
+
+    <div class="panel">
+      <h2>Quick Controls</h2>
+      <div class="preset-buttons">
+        <button id="startBtn" class="active">Start Snow</button>
+        <button id="stopBtn" class="stop">Stop Snow</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Wind Modes</h2>
+      <div class="preset-buttons">
+        <button data-mode="calm">Calm</button>
+        <button data-mode="windy" class="active">Windy</button>
+        <button data-mode="blizzard">Blizzard</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Automated Sequence</h2>
+      <div class="preset-buttons">
+        <button id="sequenceBtn">Run Demo Sequence</button>
+      </div>
+      <p style="font-size: 0.9em; opacity: 0.8; margin-top: 10px;">
+        Automatically cycles through wind modes over 15 seconds
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>Performance Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">FPS</div>
+          <div class="metric-value" id="fpsDisplay">--</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Flakes</div>
+          <div class="metric-value" id="flakeDisplay">--</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Accumulation</div>
+          <div class="metric-value" id="accDisplay">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Event Log</h2>
+      <div class="event-log" id="eventLog"></div>
+    </div>
+  </div>
+
+  <!-- UIEffects Library -->
+  <script src="../dist/ui-effects.min.js"></script>
+
+  <script>
+    // State management
+    let isSnowing = false;
+    let currentMode = 'windy';
+    let monitorInterval;
+    const eventLog = [];
+
+    // DOM Elements
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const sequenceBtn = document.getElementById('sequenceBtn');
+    const windModeButtons = document.querySelectorAll('button[data-mode]');
+    const eventLogDiv = document.getElementById('eventLog');
+
+    // Helper: Log events
+    function logEvent(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const event = { message, type, timestamp };
+      eventLog.unshift(event);
+
+      // Keep only last 20 events
+      if (eventLog.length > 20) eventLog.pop();
+
+      renderEventLog();
+      console.log(`[${timestamp}] ${message}`);
+    }
+
+    function renderEventLog() {
+      eventLogDiv.innerHTML = eventLog
+        .map(
+          event => `
+        <div class="event">
+          <span class="timestamp">[${event.timestamp}]</span>
+          ${event.message}
+        </div>
+      `
+        )
+        .join('');
+      eventLogDiv.scrollTop = 0;
+    }
+
+    // Start snow
+    startBtn.addEventListener('click', () => {
+      if (!isSnowing) {
+        UIEffects.startSnow();
+        isSnowing = true;
+        startBtn.classList.add('active');
+        stopBtn.classList.remove('active');
+        logEvent('Snow started');
+        startMonitoring();
+      }
+    });
+
+    // Stop snow
+    stopBtn.addEventListener('click', () => {
+      if (isSnowing) {
+        UIEffects.stopSnow();
+        isSnowing = false;
+        startBtn.classList.remove('active');
+        stopBtn.classList.add('active');
+        logEvent('Snow stopped');
+        stopMonitoring();
+      }
+    });
+
+    // Reset
+    resetBtn.addEventListener('click', () => {
+      UIEffects.stopSnow();
+      isSnowing = false;
+      currentMode = 'windy';
+      updateModeButtons('windy');
+      startBtn.classList.remove('active');
+      logEvent('Reset to defaults');
+      stopMonitoring();
+    });
+
+    // Wind mode selection
+    windModeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (isSnowing) {
+          UIEffects.setSnowWindMode(mode);
+          currentMode = mode;
+          updateModeButtons(mode);
+          logEvent(`Wind mode changed to: ${mode.toUpperCase()}`);
+        } else {
+          logEvent('Start snow first!', 'warning');
+        }
+      });
+    });
+
+    function updateModeButtons(activeMode) {
+      windModeButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === activeMode);
+      });
+    }
+
+    // Demo sequence
+    sequenceBtn.addEventListener('click', () => {
+      if (isSnowing) {
+        runSequence();
+      } else {
+        logEvent('Start snow first!', 'warning');
+      }
+    });
+
+    async function runSequence() {
+      const modes = ['calm', 'windy', 'blizzard'];
+      sequenceBtn.disabled = true;
+      logEvent('Starting demo sequence...');
+
+      for (const mode of modes) {
+        await new Promise(resolve => {
+          setTimeout(() => {
+            UIEffects.setSnowWindMode(mode);
+            updateModeButtons(mode);
+            logEvent(`→ Now in ${mode.toUpperCase()} mode`);
+            resolve();
+          }, 5000);
+        });
+      }
+
+      logEvent('Demo sequence complete!');
+      sequenceBtn.disabled = false;
+    }
+
+    // Performance monitoring
+    function startMonitoring() {
+      monitorInterval = setInterval(() => {
+        const metrics = UIEffects.getMetrics();
+        if (metrics) {
+          document.getElementById('fpsDisplay').textContent = metrics.fps;
+          document.getElementById('flakeDisplay').textContent = metrics.flakeCount;
+          document.getElementById('accDisplay').textContent =
+            metrics.accumulationHeight.toFixed(0);
+        }
+      }, 500);
+    }
+
+    function stopMonitoring() {
+      if (monitorInterval) {
+        clearInterval(monitorInterval);
+        document.getElementById('fpsDisplay').textContent = '--';
+        document.getElementById('flakeDisplay').textContent = '--';
+        document.getElementById('accDisplay').textContent = '--';
+      }
+    }
+
+    // Auto-create the toggle button
+    UIEffects.createSnowButton();
+
+    // Initialize
+    logEvent('Advanced Control Panel loaded');
+    updateModeButtons('windy');
+  </script>
+</body>
+</html>
