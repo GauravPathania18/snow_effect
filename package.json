@@ -1,7 +1,12 @@
 {
   "name": "ui-effects",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "A lightweight, high-performance JavaScript library that adds realistic snow animations to any web page. Features adaptive wind modes, snow accumulation physics, and intelligent color detection.",
+  "main": "dist/ui-effects.min.js",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
   "scripts": {
     "start": "npm run build && npx http-server -c-1 -o test.html",
     "test": "node tests/smoke.test.js",
@@ -9,10 +14,16 @@
     "build:dev": "esbuild src/index.js --bundle --format=iife --global-name=UIEffects --outfile=dist/ui-effects.js",
     "watch": "esbuild src/index.js --bundle --format=iife --global-name=UIEffects --outfile=dist/ui-effects.js --watch"
   },
-  "keywords": [],
+  "keywords": [
+    "snow",
+    "animation",
+    "effects",
+    "ui",
+    "particles",
+    "canvas"
+  ],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "esbuild": "^0.27.2"
   }

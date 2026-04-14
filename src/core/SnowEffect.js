@@ -495,11 +495,11 @@ export class SnowEffect {
       this.windEffect = 1.0;
     }
     if (mode === "windy") {
-      this.windStrength = 6;
+      this.windStrength = 10;
       this.windEffect = 2.0;
     }
     if (mode === "blizzard") {
-      this.windStrength = 12;
+      this.windStrength = 20;
       this.windEffect = 3.5;
     }
 
