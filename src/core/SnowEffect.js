@@ -15,6 +15,9 @@ export class SnowEffect {
       front: { speed: 1.2, size: 1.3, opacity: 1.0 }
     };
 
+    // Wind multiplier to amplify effect visually
+    this.windEffect = 2.0;
+
     // -------------------------------------------------------------------------
     // STATE CONTAINERS
     // -------------------------------------------------------------------------
@@ -30,10 +33,71 @@ export class SnowEffect {
     // Flag for strong wind interpolation during startup
     this.initializingWind = true;
 
-    this.accumulation = [];  
+    // Accumulation height map
+    this.accumulation = []; 
+    // Engine State 
     this.running = false;
     this.paused = false;
     this.lastTime = 0;
+
+     // Adaptive snow color
+    this.snowColor = `rgba(255,255,255,${cfg.opacity})`;
+
+
+    // Background brightness detector
+    this.detectBackground = () => {
+  const bg = window.getComputedStyle(document.body).background;
+
+  // CASE 1: solid color like rgb(), rgba()
+  if (bg.startsWith("rgb")) {
+    const match = bg.match(/\d+/g);
+    const r = parseInt(match[0], 10);
+    const g = parseInt(match[1], 10);
+    const b = parseInt(match[2], 10);
+    return (0.299 * r + 0.587 * g + 0.114 * b);
+  }
+
+  // CASE 2: hex color like #AABBCC
+  if (bg.startsWith("#")) {
+    const hex = bg.replace("#", "");
+    const bigint = parseInt(hex, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return (0.299 * r + 0.587 * g + 0.114 * b);
+  }
+
+  // CASE 3: linear-gradient(...)
+  if (bg.includes("gradient")) {
+    // Extract first color stop
+    const colorMatch = bg.match(/rgb[a]?\([^)]+\)|#[0-9A-Fa-f]{6}/);
+    if (!colorMatch) return 255;
+
+    const col = colorMatch[0];
+
+    // If rgb()
+    if (col.startsWith("rgb")) {
+      const nums = col.match(/\d+/g);
+      const r = parseInt(nums[0], 10);
+      const g = parseInt(nums[1], 10);
+      const b = parseInt(nums[2], 10);
+      return (0.299 * r + 0.587 * g + 0.114 * b);
+    }
+
+    // If hex
+    if (col.startsWith("#")) {
+      const hex = col.replace("#", "");
+      const bigint = parseInt(hex, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return (0.299 * r + 0.587 * g + 0.114 * b);
+    }
+  }
+
+  // Default fallback
+  return 255;
+};
 
     // Bind event methods
     this.resize = this.resize.bind(this);
@@ -43,7 +107,7 @@ export class SnowEffect {
 
 
   // ==========================================================================
-  // START EFFECT
+  // START SNOW EFFECT
   // ==========================================================================
   start() {
     if (this.running) return;
@@ -70,7 +134,7 @@ export class SnowEffect {
 
     // Strong wind mode for first second
     this.initializingWind = true;
-    setTimeout(() => (this.initializingWind = false), 1000);
+    setTimeout(() => (this.initializingWind = false), 800);
 
     // Setup
     this.resize();
@@ -80,13 +144,17 @@ export class SnowEffect {
     this.createFlakes();
     this.initAccumulation();
 
+    // Detect background & update snow color once
+    const bg = this.detectBackground();
+    this.updateSnowColor(bg);
+
     this.lastTime = performance.now();
     this.loop(this.lastTime);
   }
 
 
   // ==========================================================================
-  // STOP EFFECT
+  // STOP SNOW EFFECT
   // ==========================================================================
   stop() {
     this.running = false;
@@ -102,7 +170,7 @@ export class SnowEffect {
 
 
   // ==========================================================================
-  // HANDLE TAB HIDE/SHOW
+  // HANDLE TAB VISIBILITY
   // ==========================================================================
   handleVisibility() {
     if (document.hidden) {
@@ -121,6 +189,10 @@ export class SnowEffect {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.initAccumulation(); // rebuild accumulation map
+
+    // Update snow color on background change
+    const bg = this.detectBackground();
+    this.updateSnowColor(bg);
   }
 
 
@@ -300,11 +372,48 @@ export class SnowEffect {
         continue;
       }
 
-      // Draw flake
+      // Draw flake with adaptive color
       ctx.beginPath();
-      ctx.fillStyle = `rgba(255,255,255,${cfg.opacity})`;
+      ctx.fillStyle = this.snowColor;
       ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+   // ===========================================================================
+  // UPDATE SNOW COLOR BASED ON BACKGROUND BRIGHTNESS
+  // ===========================================================================
+  updateSnowColor(brightness) {
+    if (brightness < 100) {
+      this.snowColor = "rgba(255,255,255,0.95)";   // Bright snow on dark background
+    } else if (brightness < 180) {
+      this.snowColor = "rgba(220,220,220,0.9)";    // Neutral snow
+    } else {
+      this.snowColor = "rgba(170,170,170,0.9)";    // Darker snow on bright background
+    }
+  }
+
+   // ▼▼▼ WIND MODE API (CALM / WINDY / BLIZZARD) ▼▼▼
+  setWindMode(mode) {
+    if (mode === "calm") {
+      this.windStrength = 2;
+      this.windEffect = 1.0;
+    }
+    if (mode === "windy") {
+      this.windStrength = 6;
+      this.windEffect = 2.0;
+    }
+    if (mode === "blizzard") {
+      this.windStrength = 12;
+      this.windEffect = 3.5;
+    }
+
+    // Apply new wind instantly
+    this.wind.current = (Math.random() * 2 - 1) * this.windStrength;
+    this.wind.target  = (Math.random() * 2 - 1) * this.windStrength;
+    this.wind.timer   = 1 + Math.random() * 1;
+
+    this.initializingWind = true;
+    setTimeout(() => (this.initializingWind = false), 800);
   }
 }

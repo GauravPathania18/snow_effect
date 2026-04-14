@@ -1,0 +1,40 @@
+/* Full-page background theme */
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #1b2735 0%, #090a0f 100%);
+  overflow-x: hidden;
+  font-family: Arial, sans-serif;
+}
+
+/* Floating control panel */
+#snow-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 30px rgba(0,0,0,0.4);
+  z-index: 10000;
+}
+
+/* Buttons */
+#snow-controls button {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(135deg, #708acb, #a7b8e8);
+  transition: all 0.25s ease;
+  font-weight: bold;
+}
+
+#snow-controls button:hover {
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, #8aa8f0, #d7e0fc);
+}
