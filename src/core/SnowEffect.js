@@ -6,7 +6,7 @@ export class SnowEffect {
     // -------------------------------------------------------------------------
     this.maxFlakes = options.maxFlakes || 2000;      // Total flakes on screen
     this.gravity = options.gravity || 18;           // Downward force
-    this.windStrength = options.windStrength || 6;  // Max wind speed
+    this.windStrength = options.windStrength || 16;  // Max wind speed
 
     // Depth layers for realism
     this.layers = {
@@ -40,69 +40,60 @@ export class SnowEffect {
     this.paused = false;
     this.lastTime = 0;
 
-     // Adaptive snow color
-    this.snowColor = `rgba(255,255,255,${cfg.opacity})`;
+    // Performance monitoring
+    this.frameCount = 0;
+    this.fps = 60;
+    this.fpsCheckTime = 0;
+    this.fpsUpdateInterval = 1000; // Check FPS every 1 second
 
-
-    // Background brightness detector
-    this.detectBackground = () => {
-  const bg = window.getComputedStyle(document.body).background;
-
-  // CASE 1: solid color like rgb(), rgba()
-  if (bg.startsWith("rgb")) {
-    const match = bg.match(/\d+/g);
-    const r = parseInt(match[0], 10);
-    const g = parseInt(match[1], 10);
-    const b = parseInt(match[2], 10);
-    return (0.299 * r + 0.587 * g + 0.114 * b);
-  }
-
-  // CASE 2: hex color like #AABBCC
-  if (bg.startsWith("#")) {
-    const hex = bg.replace("#", "");
-    const bigint = parseInt(hex, 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-    return (0.299 * r + 0.587 * g + 0.114 * b);
-  }
-
-  // CASE 3: linear-gradient(...)
-  if (bg.includes("gradient")) {
-    // Extract first color stop
-    const colorMatch = bg.match(/rgb[a]?\([^)]+\)|#[0-9A-Fa-f]{6}/);
-    if (!colorMatch) return 255;
-
-    const col = colorMatch[0];
-
-    // If rgb()
-    if (col.startsWith("rgb")) {
-      const nums = col.match(/\d+/g);
-      const r = parseInt(nums[0], 10);
-      const g = parseInt(nums[1], 10);
-      const b = parseInt(nums[2], 10);
-      return (0.299 * r + 0.587 * g + 0.114 * b);
-    }
-
-    // If hex
-    if (col.startsWith("#")) {
-      const hex = col.replace("#", "");
-      const bigint = parseInt(hex, 16);
-      const r = (bigint >> 16) & 255;
-      const g = (bigint >> 8) & 255;
-      const b = bigint & 255;
-      return (0.299 * r + 0.587 * g + 0.114 * b);
-    }
-  }
-
-  // Default fallback
-  return 255;
-};
+     // Adaptive snow color (default - will be updated based on background)
+    this.snowColor = "rgba(255,255,255,0.95)";
 
     // Bind event methods
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
     this.handleVisibility = this.handleVisibility.bind(this);
+  }
+
+
+  // ==========================================================================
+  // PERFORMANCE MONITORING & ADAPTIVE SETTINGS
+  // ==========================================================================
+  updateFrameRate(delta) {
+    this.frameCount++;
+    this.fpsCheckTime += delta * 1000;
+
+    if (this.fpsCheckTime >= this.fpsUpdateInterval) {
+      this.fps = Math.round(this.frameCount / (this.fpsCheckTime / 1000));
+      
+      // Auto-reduce flakes if FPS drops below 30
+      if (this.fps < 30 && this.flakes.length > 500) {
+        const reduction = Math.floor(this.flakes.length * 0.2); // Remove 20%
+        this.flakes.splice(0, reduction);
+        console.warn(`[SnowEffect] FPS low (${this.fps}) - removed ${reduction} flakes for performance`);
+      }
+      
+      // Auto-increase flakes if FPS is healthy and we're below 80% max
+      if (this.fps > 50 && this.flakes.length < this.maxFlakes * 0.8) {
+        const increase = Math.floor(this.maxFlakes * 0.1); // Add 10%
+        for (let i = 0; i < increase; i++) {
+          const randomLayer = Object.keys(this.layers)[Math.floor(Math.random() * Object.keys(this.layers).length)];
+          this.flakes.push(this.spawnFlake(randomLayer));
+        }
+      }
+
+      this.frameCount = 0;
+      this.fpsCheckTime = 0;
+    }
+  }
+
+  // Get current FPS (for debugging)
+  getPerformanceMetrics() {
+    return {
+      fps: this.fps,
+      flakeCount: this.flakes.length,
+      accumulationHeight: Math.max(...this.accumulation)
+    };
   }
 
 
@@ -113,9 +104,32 @@ export class SnowEffect {
     if (this.running) return;
     this.running = true;
 
+    // Check browser support
+    if (!window.requestAnimationFrame) {
+      console.warn('[SnowEffect] requestAnimationFrame not supported - animation disabled');
+      return;
+    }
+
     // Create fullscreen canvas overlay
-    this.canvas = document.createElement("canvas");
-    this.ctx = this.canvas.getContext("2d");
+    try {
+      this.canvas = document.createElement("canvas");
+      if (!this.canvas) {
+        console.error('[SnowEffect] Canvas element creation failed');
+        this.running = false;
+        return;
+      }
+
+      this.ctx = this.canvas.getContext("2d");
+      if (!this.ctx) {
+        console.error('[SnowEffect] 2D context unavailable');
+        this.running = false;
+        return;
+      }
+    } catch (err) {
+      console.error('[SnowEffect] Canvas initialization failed:', err);
+      this.running = false;
+      return;
+    }
 
     Object.assign(this.canvas.style, {
       position: "fixed",
@@ -125,7 +139,13 @@ export class SnowEffect {
       zIndex: 9999
     });
 
-    document.body.appendChild(this.canvas);
+    try {
+      document.body.appendChild(this.canvas);
+    } catch (err) {
+      console.error('[SnowEffect] Failed to append canvas to DOM:', err);
+      this.running = false;
+      return;
+    }
 
     // Randomize wind every time effect starts
     this.wind.current = (Math.random() * 2 - 1) * this.windStrength;
@@ -140,6 +160,7 @@ export class SnowEffect {
     this.resize();
     window.addEventListener("resize", this.resize);
     document.addEventListener("visibilitychange", this.handleVisibility);
+    window.addEventListener("beforeunload", () => this.stop());
 
     this.createFlakes();
     this.initAccumulation();
@@ -162,6 +183,7 @@ export class SnowEffect {
 
     window.removeEventListener("resize", this.resize);
     document.removeEventListener("visibilitychange", this.handleVisibility);
+    window.removeEventListener("beforeunload", () => this.stop());
 
     this.canvas?.remove();
     this.flakes = [];
@@ -186,6 +208,8 @@ export class SnowEffect {
   // RESIZE CANVAS + RESET ACCUMULATION
   // ==========================================================================
   resize() {
+    if (!this.canvas) return;
+
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.initAccumulation(); // rebuild accumulation map
@@ -193,6 +217,74 @@ export class SnowEffect {
     // Update snow color on background change
     const bg = this.detectBackground();
     this.updateSnowColor(bg);
+  }
+
+
+  // ==========================================================================
+  // DETECT BACKGROUND BRIGHTNESS FOR ADAPTIVE SNOW COLOR
+  // ==========================================================================
+  detectBackground() {
+    try {
+      const bg = window.getComputedStyle(document.body).background;
+      if (!bg) return 255;
+
+      // CASE 1: solid color like rgb(), rgba()
+      if (bg.startsWith("rgb")) {
+        const match = bg.match(/\d+/g);
+        if (!match || match.length < 3) return 255;
+        const r = parseInt(match[0], 10);
+        const g = parseInt(match[1], 10);
+        const b = parseInt(match[2], 10);
+        return (0.299 * r + 0.587 * g + 0.114 * b);
+      }
+
+      // CASE 2: hex color like #AABBCC
+      if (bg.startsWith("#")) {
+        const hex = bg.replace("#", "");
+        if (hex.length < 6) return 255;
+        const bigint = parseInt(hex, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return (0.299 * r + 0.587 * g + 0.114 * b);
+      }
+
+      // CASE 3: linear-gradient(...)
+      if (bg.includes("gradient")) {
+        // Extract first color stop
+        const colorMatch = bg.match(/rgb[a]?\([^)]+\)|#[0-9A-Fa-f]{6}/);
+        if (!colorMatch) return 255;
+
+        const col = colorMatch[0];
+
+        // If rgb()
+        if (col.startsWith("rgb")) {
+          const nums = col.match(/\d+/g);
+          if (!nums || nums.length < 3) return 255;
+          const r = parseInt(nums[0], 10);
+          const g = parseInt(nums[1], 10);
+          const b = parseInt(nums[2], 10);
+          return (0.299 * r + 0.587 * g + 0.114 * b);
+        }
+
+        // If hex
+        if (col.startsWith("#")) {
+          const hex = col.replace("#", "");
+          if (hex.length < 6) return 255;
+          const bigint = parseInt(hex, 16);
+          const r = (bigint >> 16) & 255;
+          const g = (bigint >> 8) & 255;
+          const b = bigint & 255;
+          return (0.299 * r + 0.587 * g + 0.114 * b);
+        }
+      }
+
+      // Default fallback
+      return 255;
+    } catch (err) {
+      console.warn('[SnowEffect] Background detection failed, using fallback:', err);
+      return 255;
+    }
   }
 
 
@@ -323,6 +415,7 @@ export class SnowEffect {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.updateWind(delta);
+    this.updateFrameRate(delta);
     this.updateAndDrawFlakes(delta);
 
     this.smoothAccumulation();
@@ -336,6 +429,8 @@ export class SnowEffect {
   // UPDATE & DRAW SNOWFLAKES
   // ==========================================================================
   updateAndDrawFlakes(delta) {
+    if (!this.canvas || !this.ctx) return;
+
     const ctx = this.ctx;
 
     for (const f of this.flakes) {

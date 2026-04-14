@@ -4,15 +4,15 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <meta charset="UTF-8" />
   <title>Snow Effect with Wind Modes</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <!-- WIND MODE CONTROL PANEL -->
-  <div id="snow-controls">
-    <button data-mode="calm">Calm</button>
-    <button data-mode="windy">Windy</button>
-    <button data-mode="blizzard">Blizzard</button>
+  <div id="snow-controls" role="group" aria-label="Wind mode controls">
+    <button data-mode="calm" aria-label="Set wind to calm">Calm</button>
+    <button data-mode="windy" aria-label="Set wind to windy">Windy</button>
+    <button data-mode="blizzard" aria-label="Set wind to blizzard">Blizzard</button>
   </div>
 
   <!-- SNOW SCRIPT BUNDLE -->
