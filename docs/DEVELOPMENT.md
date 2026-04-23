@@ -19,37 +19,13 @@ This guide explains the architecture of UIEffects and how to set up a developmen
 UIEffects is built on a **modular, decoupled architecture** where each system has a single responsibility:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    UIEffects Library                        │
-│           Main Entry Point (src/index.js)                   │
-└───────────┬───────────────────────────────────────────────────┘
-            │
-            ├──────→ EffectManager
-            │        └─ Effect registry & lifecycle
-            │           ├─ Register effects
-            │           ├─ Enable/disable effects
-            │           └─ Global cleanup
-            │
-            ├──────→ SnowEffect
-            │        └─ Snowflake animation engine
-            │           ├─ 6-pointed star rendering
-            │           ├─ Snow accumulation
-            │           └─ White/opaque particles
-            │
-            ├──────→ FlowerEffect
-            │        └─ Falling petals animation
-            │           ├─ Soft pink colors
-            │           ├─ Gentle swaying motion
-            │           └─ Ground accumulation
-            │
-            ├──────→ AutumnEffect
-            │        └─ Falling leaves animation
-            │           ├─ Orange/brown seasonal colors
-            │           ├─ Heavier falling motion
-            │           └─ Ground accumulation
+┌─────────────────────────────────────────────┐
+│            SnowEffect                       │
+│   Main Orchestrator (260 lines)             │
+└───────────┬─────────────────────────────────┘
             │
             ├──────→ ParticleSystem
-            │        └─ Shared particle physics
+            │        └─ Manage snowflakes
             │           ├─ Physics calculations
             │           └─ Canvas rendering
             │
@@ -59,14 +35,14 @@ UIEffects is built on a **modular, decoupled architecture** where each system ha
             │           └─ Smooth transitions
             │
             ├──────→ AccumulationSystem
-            │        └─ Ground piles
+            │        └─ Snow piles
             │           ├─ Height map
             │           └─ Ground rendering
             │
             └──────→ BackgroundDetection
                      └─ Color analysis
                         ├─ Brightness detection
-                        └─ Particle color selection
+                        └─ Snow color selection
 ```
 
 ### Design Principles
@@ -86,21 +62,17 @@ ui-effects/
 ├── src/
 │   ├── core/                      # Core animation systems
 │   │   ├── EffectManager.js      # Effect registry & lifecycle
-│   │   ├── SnowEffect.js         # Snow animation engine
-│   │   ├── FlowerEffect.js       # Flower petals engine
-│   │   ├── AutumnEffect.js       # Falling leaves engine
+│   │   ├── SnowEffect.js         # Main orchestrator
 │   │   ├── ParticleSystem.js     # Particle physics
 │   │   ├── WindSystem.js         # Wind simulation
-│   │   ├── AccumulationSystem.js # Ground piles
+│   │   ├── AccumulationSystem.js # Snow piles
 │   │   └── BackgroundDetection.js # Color detection
 │   │
 │   ├── ui/                        # UI components
 │   │   ├── components/
-│   │   │   ├── SnowButton.js     # Snow toggle button
-│   │   │   ├── FlowerButton.js   # Flower toggle button
-│   │   │   ├── AutumnButton.js   # Autumn toggle button
+│   │   │   ├── SnowButton.js     # Toggle button
 │   │   │   └── WindControls.js   # Wind selector
-│   │   └── createSnowButton.js   # Component exports
+│   │   └── createSnowButton.js   # Exports
 │   │
 │   ├── config/
 │   │   └── settings.js           # Configuration constants
@@ -204,35 +176,15 @@ src/ → esbuild → dist/ui-effects.min.js
 
 ## Core Modules
 
-### EffectManager.js (~100 lines)
-
-**Role:** Central registry for all effects.
-
-**Key Responsibilities:**
-- Effect registration
-- Enable/disable lifecycle
-- Global cleanup coordination
-
-**Key Methods:**
-```javascript
-register(name, effect)   // Register a new effect
-enable(name)             // Start an effect
-disable(name)            // Stop an effect
-cleanup()                // Clean up all effects
-```
-
----
-
 ### SnowEffect.js (~260 lines)
 
-**Role:** Snow animation engine.
+**Role:** Main orchestrator that coordinates all systems.
 
 **Key Responsibilities:**
 - Canvas setup and cleanup
 - Animation loop management
 - Event handling (resize, visibility)
 - System coordination
-- 6-pointed snowflake rendering
 
 **Key Methods:**
 ```javascript
@@ -254,46 +206,6 @@ this.accumulation = new AccumulationSystem();
 this.wind.update(delta);
 this.particles.updateAndDraw(...);
 this.accumulation.draw(...);
-```
-
----
-
-### FlowerEffect.js (~250 lines)
-
-**Role:** Falling flower petals animation engine.
-
-**Key Responsibilities:**
-- Canvas setup and cleanup
-- Petal physics and rendering
-- Soft pink color scheme
-- Gentle swaying motion
-
-**Key Methods:**
-```javascript
-start()              // Initialize animation
-stop()               // Stop and clean up
-loop(now)            // Main animation loop
-setWindMode(mode)    // Change wind behavior
-```
-
----
-
-### AutumnEffect.js (~260 lines)
-
-**Role:** Falling leaves animation engine.
-
-**Key Responsibilities:**
-- Canvas setup and cleanup
-- Leaf physics and rendering
-- Seasonal orange/brown colors
-- Heavier falling motion
-
-**Key Methods:**
-```javascript
-start()              // Initialize animation
-stop()               // Stop and clean up
-loop(now)            // Main animation loop
-setWindMode(mode)    // Change wind behavior
 ```
 
 ---

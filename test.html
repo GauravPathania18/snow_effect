@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta charset="UTF-8" />
+  <title>Snow Effect with Wind Modes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- WIND MODE CONTROL PANEL -->
+  <div id="snow-controls" role="group" aria-label="Wind mode controls">
+    <button data-mode="calm" aria-label="Set wind to calm">Calm</button>
+    <button data-mode="windy" aria-label="Set wind to windy">Windy</button>
+    <button data-mode="blizzard" aria-label="Set wind to blizzard">Blizzard</button>
+  </div>
+
+  <!-- SNOW SCRIPT BUNDLE -->
+ <script src="./dist/ui-effects.min.js"></script>
+
+<script>
+  // 1. Create the Let It Snow toggle button
+  UIEffects.createSnowButton();
+
+  // 2. Access the snow instance
+  const snow = UIEffects.effectManager.effects.snow;
+
+  // 3. Wire wind mode buttons
+  document.querySelectorAll("#snow-controls button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      snow.setWindMode(btn.dataset.mode);
+    });
+  });
+</script>
+
+
+
+</body>
+</html>
