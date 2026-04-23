@@ -117,7 +117,7 @@ export class SnowEffect {
     this.resize();
     window.addEventListener('resize', this.resize);
     document.addEventListener('visibilitychange', this.handleVisibility);
-    window.addEventListener('beforeunload', () => this.stop());
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
 
     // Initialize particles and systems
     this.particles.createFlakes(this.canvas.width, this.canvas.height);
@@ -141,7 +141,7 @@ export class SnowEffect {
 
     window.removeEventListener('resize', this.resize);
     document.removeEventListener('visibilitychange', this.handleVisibility);
-    window.removeEventListener('beforeunload', () => this.stop());
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
 
     this.canvas?.remove();
     this.particles.clear();
@@ -165,6 +165,10 @@ export class SnowEffect {
       this.paused = false;
       this.lastTime = performance.now(); // Avoid delta spike
     }
+  }
+
+  handleBeforeUnload() {
+    this.stop();
   }
 
   resize() {

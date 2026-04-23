@@ -14,6 +14,8 @@ export class ParticleSystem {
    * Initialize all layered snowflakes
    */
   createFlakes(canvasWidth, canvasHeight) {
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
     const layers = Object.keys(this.layers);
     const perLayer = Math.floor(this.maxFlakes / layers.length);
 
@@ -49,6 +51,8 @@ export class ParticleSystem {
    * Update physics and draw all flakes
    */
   updateAndDraw(delta, ctx, props, accumulation, canvasWidth, canvasHeight) {
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
     for (const f of this.flakes) {
       const cfg = this.layers[f.layer];
 

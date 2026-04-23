@@ -33,7 +33,7 @@ export class AutumnEffect {
     this.running = true;
 
     if (!window.requestAnimationFrame) {
-      console.warn('[LeavesEffect] requestAnimationFrame not supported');
+      console.warn('[AutumnEffect] requestAnimationFrame not supported');
       return;
     }
 
@@ -246,7 +246,7 @@ export class AutumnEffect {
 
     const modeConfig = modes[mode];
     if (!modeConfig) {
-      console.warn(`[LeavesEffect] Unknown wind mode: ${mode}`);
+      console.warn(`[AutumnEffect] Unknown wind mode: ${mode}`);
       return;
     }
 
