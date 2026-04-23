@@ -1,7 +1,7 @@
 {
   "name": "ui-effects",
   "version": "1.0.0",
-  "description": "A lightweight, high-performance JavaScript library that adds realistic snow animations to any web page. Features adaptive wind modes, snow accumulation physics, and intelligent color detection.",
+  "description": "A lightweight, high-performance JavaScript library for particle animations including snow, falling flowers, and autumn leaves. Features adaptive wind modes, accumulation physics, and seamless integration.",
   "main": "dist/ui-effects.min.js",
   "repository": {
     "type": "git",
@@ -16,11 +16,17 @@
   },
   "keywords": [
     "snow",
+    "flowers",
+    "autumn",
+    "leaves",
     "animation",
     "effects",
     "ui",
     "particles",
-    "canvas"
+    "canvas",
+    "particles",
+    "seasonal",
+    "weather"
   ],
   "author": "",
   "license": "ISC",

@@ -7,6 +7,8 @@ Complete documentation for the UIEffects API.
 - [UIEffects Object](#uieffects-object)
 - [Effect Manager](#effect-manager)
 - [Snow Effect](#snow-effect)
+- [Flower Effect](#flower-effect)
+- [Autumn Effect](#autumn-effect)
 - [Component Functions](#component-functions)
 
 ---
@@ -33,6 +35,50 @@ UIEffects.createSnowButton();
 
 **Behavior:**
 - Creates a button with id `ui-snow-button`
+- Places it in the bottom-right corner
+- Saves state to localStorage
+- Prevents duplicate buttons
+
+---
+
+#### `createFlowerButton(options?)`
+
+Creates a floating toggle button to start/stop the flower effect.
+
+**Parameters:**
+- `options` (Object, optional) - Unused; reserved for future use
+
+**Returns:** `undefined`
+
+**Example:**
+```javascript
+UIEffects.createFlowerButton();
+```
+
+**Behavior:**
+- Creates a button with id `ui-flower-button`
+- Places it in the bottom-right corner
+- Saves state to localStorage
+- Prevents duplicate buttons
+
+---
+
+#### `createAutumnButton(options?)`
+
+Creates a floating toggle button to start/stop the autumn leaves effect.
+
+**Parameters:**
+- `options` (Object, optional) - Unused; reserved for future use
+
+**Returns:** `undefined`
+
+**Example:**
+```javascript
+UIEffects.createAutumnButton();
+```
+
+**Behavior:**
+- Creates a button with id `ui-autumn-button`
 - Places it in the bottom-right corner
 - Saves state to localStorage
 - Prevents duplicate buttons
@@ -86,9 +132,61 @@ UIEffects.stopSnow();
 
 ---
 
-#### `setSnowWindMode(mode)`
+#### `startFlowers()`
 
-Changes the wind mode for the active snow effect.
+Starts the falling flowers animation.
+
+**Returns:** `undefined`
+
+**Example:**
+```javascript
+UIEffects.startFlowers();
+```
+
+---
+
+#### `stopFlowers()`
+
+Stops the falling flowers animation immediately.
+
+**Returns:** `undefined`
+
+**Example:**
+```javascript
+UIEffects.stopFlowers();
+```
+
+---
+
+#### `startAutumn()`
+
+Starts the falling leaves animation.
+
+**Returns:** `undefined`
+
+**Example:**
+```javascript
+UIEffects.startAutumn();
+```
+
+---
+
+#### `stopAutumn()`
+
+Stops the falling leaves animation immediately.
+
+**Returns:** `undefined`
+
+**Example:**
+```javascript
+UIEffects.stopAutumn();
+```
+
+---
+
+#### `setWindMode(mode)` / `setSnowWindMode(mode)`
+
+Changes the wind mode for all active effects (snow, flowers, autumn).
 
 **Parameters:**
 - `mode` (String) - One of: `'calm'`, `'windy'`, `'blizzard'`
@@ -99,9 +197,9 @@ Changes the wind mode for the active snow effect.
 
 **Example:**
 ```javascript
-UIEffects.setSnowWindMode('blizzard');  // Intense snowstorm
-UIEffects.setSnowWindMode('calm');      // Gentle snow
-UIEffects.setSnowWindMode('windy');     // Moderate wind
+UIEffects.setWindMode('blizzard');  // Intense storm
+UIEffects.setWindMode('calm');      // Gentle fall
+UIEffects.setWindMode('windy');     // Moderate wind
 ```
 
 **Wind Mode Details:**
@@ -350,14 +448,222 @@ Whether the effect is paused (tab hidden).
 
 ---
 
+## Flower Effect
+
+Core class for falling flower animations.
+
+### Constructor
+
+```javascript
+new FlowerEffect(options)
+```
+
+**Parameters:**
+```javascript
+{
+  maxPetals: 1500,           // Max particle count (default: 1500)
+  fallSpeedMin: 14,          // Minimum fall speed (default: 14)
+  fallSpeedMax: 42,          // Maximum fall speed (default: 42)
+  windStrength: 18,          // Wind magnitude (default: 18)
+  windEffect: 1.8,           // Visual wind amplification (default: 1.8)
+  swingAmplitude: 22         // Sway motion intensity (default: 22)
+}
+```
+
+**Example:**
+```javascript
+import { FlowerEffect } from 'ui-effects/src/core/FlowerEffect.js';
+
+const flowers = new FlowerEffect({
+  maxPetals: 1200,
+  fallSpeedMin: 10,
+  fallSpeedMax: 35
+});
+
+flowers.start();
+```
+
+### Methods
+
+#### `start()`
+
+Initializes and starts the flower animation.
+
+**Returns:** `undefined`
+
+**Setup includes:**
+- Canvas creation and styling
+- Event listeners (resize, visibility)
+- Petal initialization
+- Accumulation system setup
+
+---
+
+#### `stop()`
+
+Stops the animation and cleans up resources.
+
+**Returns:** `undefined`
+
+---
+
+#### `setWindMode(mode)`
+
+Changes wind behavior.
+
+**Parameters:**
+- `mode` (String) - `'calm'`, `'windy'`, or `'blizzard'`
+
+**Returns:** `undefined`
+
+---
+
+### Properties
+
+#### `running`
+
+Whether the effect is currently running.
+
+**Type:** `Boolean`
+
+---
+
+#### `paused`
+
+Whether the effect is paused (tab hidden).
+
+**Type:** `Boolean`
+
+---
+
+## Autumn Effect
+
+Core class for falling leaves animations.
+
+### Constructor
+
+```javascript
+new AutumnEffect(options)
+```
+
+**Parameters:**
+```javascript
+{
+  maxPetals: 1800,           // Max particle count (default: 1800)
+  fallSpeedMin: 20,          // Minimum fall speed (default: 20)
+  fallSpeedMax: 52,          // Maximum fall speed (default: 52)
+  windStrength: 26,          // Wind magnitude (default: 26)
+  windEffect: 2.0,           // Visual wind amplification (default: 2.0)
+  swingAmplitude: 26         // Sway motion intensity (default: 26)
+}
+```
+
+**Example:**
+```javascript
+import { AutumnEffect } from 'ui-effects/src/core/AutumnEffect.js';
+
+const autumn = new AutumnEffect({
+  maxPetals: 1500,
+  fallSpeedMin: 15,
+  fallSpeedMax: 45
+});
+
+autumn.start();
+```
+
+### Methods
+
+#### `start()`
+
+Initializes and starts the autumn leaves animation.
+
+**Returns:** `undefined`
+
+**Setup includes:**
+- Canvas creation and styling
+- Event listeners (resize, visibility)
+- Leaf initialization with seasonal colors
+- Accumulation system setup
+
+---
+
+#### `stop()`
+
+Stops the animation and cleans up resources.
+
+**Returns:** `undefined`
+
+---
+
+#### `setWindMode(mode)`
+
+Changes wind behavior.
+
+**Parameters:**
+- `mode` (String) - `'calm'`, `'windy'`, or `'blizzard'`
+
+**Returns:** `undefined`
+
+---
+
+### Properties
+
+#### `running`
+
+Whether the effect is currently running.
+
+**Type:** `Boolean`
+
+---
+
+#### `paused`
+
+Whether the effect is paused (tab hidden).
+
+**Type:** `Boolean`
+
+---
+
 ## Component Functions
 
 ### createSnowButton
 
-Standalone function to create the toggle button.
+Standalone function to create the snow toggle button.
 
 ```javascript
 export function createSnowButton(options = {})
+```
+
+**Features:**
+- Persistent state via localStorage
+- ARIA accessibility attributes
+- Duplicate prevention
+- Automatic cleanup on unload
+
+---
+
+### createFlowerButton
+
+Standalone function to create the flower toggle button.
+
+```javascript
+export function createFlowerButton(options = {})
+```
+
+**Features:**
+- Persistent state via localStorage
+- ARIA accessibility attributes
+- Duplicate prevention
+- Automatic cleanup on unload
+
+---
+
+### createAutumnButton
+
+Standalone function to create the autumn toggle button.
+
+```javascript
+export function createAutumnButton(options = {})
 ```
 
 **Features:**
@@ -396,7 +702,7 @@ While these are typically used internally, they can be imported directly for adv
 
 ### ParticleSystem
 
-Manages snowflake particles.
+Manages particle physics and rendering.
 
 ```javascript
 import { ParticleSystem } from 'ui-effects/src/core/ParticleSystem.js';
@@ -412,7 +718,7 @@ import { WindSystem } from 'ui-effects/src/core/WindSystem.js';
 
 ### AccumulationSystem
 
-Manages snow piles.
+Manages ground pile accumulation.
 
 ```javascript
 import { AccumulationSystem } from 'ui-effects/src/core/AccumulationSystem.js';
@@ -424,6 +730,16 @@ Manages color detection.
 
 ```javascript
 import { BackgroundDetection } from 'ui-effects/src/core/BackgroundDetection.js';
+```
+
+### Effect Classes
+
+Direct access to effect implementations:
+
+```javascript
+import { SnowEffect } from 'ui-effects/src/core/SnowEffect.js';
+import { FlowerEffect } from 'ui-effects/src/core/FlowerEffect.js';
+import { AutumnEffect } from 'ui-effects/src/core/AutumnEffect.js';
 ```
 
 ---
@@ -445,17 +761,19 @@ import { BackgroundDetection } from 'ui-effects/src/core/BackgroundDetection.js'
 ### Complete Setup
 
 ```javascript
-// 1. Create button
+// 1. Create buttons for all effects
 UIEffects.createSnowButton();
+UIEffects.createFlowerButton();
+UIEffects.createAutumnButton();
 
-// 2. Get snow instance
+// 2. Get effect instances
 const snow = UIEffects.effectManager.effects.snow;
 
 // 3. Initialize wind controls
 UIEffects.initializeWindControls(snow);
 
-// 4. Set default mode
-UIEffects.setSnowWindMode('windy');
+// 4. Set default mode (applies to all effects)
+UIEffects.setWindMode('windy');
 
 // 5. Monitor performance
 setInterval(() => {
@@ -469,17 +787,19 @@ setInterval(() => {
 ### Programmatic Control
 
 ```javascript
-// Start snow
+// Start effects
 UIEffects.startSnow();
+UIEffects.startFlowers();
 
 // Change to blizzard after 5 seconds
 setTimeout(() => {
-  UIEffects.setSnowWindMode('blizzard');
+  UIEffects.setWindMode('blizzard');
 }, 5000);
 
 // Stop after 10 seconds
 setTimeout(() => {
   UIEffects.stopSnow();
+  UIEffects.stopFlowers();
 }, 10000);
 ```
 
