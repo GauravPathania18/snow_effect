@@ -1,6 +1,6 @@
-# UIEffects - Snow Animation Library
+# UIEffects - Particle Animation Library
 
-A lightweight, high-performance JavaScript library that adds realistic snow animations to any web page. Features adaptive wind modes, snow accumulation physics, and intelligent color detection for seamless integration.
+A lightweight, high-performance JavaScript library that adds beautiful particle animations to any web page. Features snow, falling flowers, and autumn leaves effects with adaptive wind modes, accumulation physics, and seamless integration.
 
 [![npm version](https://img.shields.io/npm/v/ui-effects.svg)](https://www.npmjs.com/package/ui-effects)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
@@ -9,10 +9,13 @@ A lightweight, high-performance JavaScript library that adds realistic snow anim
 ## ✨ Features
 
 - 🎯 **Lightweight** - Only 13 KB minified with zero dependencies
-- 🎨 **Adaptive Colors** - Automatically detects background and adjusts snow color
+- ❄️ **Snow Effect** - Realistic snowfall with accumulation physics
+- 🌸 **Flower Effect** - Beautiful falling flower petals
+- 🍂 **Autumn Effect** - Falling leaves with seasonal colors
+- 🎨 **Adaptive Colors** - Automatically detects background and adjusts particle colors
 - 🌬️ **Multiple Wind Modes** - Calm, Windy, and Blizzard presets
-- 📊 **Performance Optimized** - Adaptive flake count, ~2000 particles at 60 FPS
-- 🧊 **Realistic Physics** - Gravity, wind drift, zigzag motion, and snow accumulation
+- 📊 **Performance Optimized** - Adaptive particle count, ~2000 particles at 60 FPS
+- 🧊 **Realistic Physics** - Gravity, wind drift, zigzag motion, and ground accumulation
 - 🎭 **Modular Architecture** - Well-organized, testable, and extensible codebase
 - ♿ **Accessible** - Full ARIA support and keyboard friendly
 - 🔧 **Easy Integration** - Simple API for any project
@@ -25,7 +28,10 @@ A lightweight, high-performance JavaScript library that adds realistic snow anim
 ```html
 <script src="https://cdn.jsdelivr.net/npm/ui-effects@latest/dist/ui-effects.min.js"></script>
 <script>
+  // Create toggle buttons for any effect
   UIEffects.createSnowButton();
+  UIEffects.createFlowerButton();
+  UIEffects.createAutumnButton();
 </script>
 ```
 
@@ -36,24 +42,32 @@ npm install ui-effects
 
 ```javascript
 import UIEffects from 'ui-effects';
+
+// Create toggle buttons for any effect
 UIEffects.createSnowButton();
+UIEffects.createFlowerButton();
+UIEffects.createAutumnButton();
 ```
 
 ### Basic Usage
 
 ```javascript
-// Start snow effect
+// Start effects
 UIEffects.startSnow();
+UIEffects.startFlowers();
+UIEffects.startAutumn();
 
-// Change wind mode
-UIEffects.setSnowWindMode('blizzard');  // 'calm', 'windy', or 'blizzard'
+// Change wind mode (applies to all effects)
+UIEffects.setWindMode('blizzard');  // 'calm', 'windy', or 'blizzard'
 
 // Get performance metrics
 const metrics = UIEffects.getMetrics();
-console.log(`FPS: ${metrics.fps}, Flakes: ${metrics.flakeCount}`);
+console.log(`FPS: ${metrics.fps}, Particles: ${metrics.flakeCount}`);
 
-// Stop snow effect
+// Stop effects
 UIEffects.stopSnow();
+UIEffects.stopFlowers();
+UIEffects.stopAutumn();
 ```
 
 ## 📖 Documentation
@@ -81,14 +95,18 @@ UIEffects uses a modular, well-organized architecture for maintainability and ex
 src/
 ├── core/                      # Core effect engines
 │   ├── EffectManager.js      # Effect registry & lifecycle
-│   ├── SnowEffect.js         # Main orchestrator
+│   ├── SnowEffect.js         # Snow animation engine
+│   ├── FlowerEffect.js       # Falling flowers engine
+│   ├── AutumnEffect.js       # Falling leaves engine
 │   ├── ParticleSystem.js     # Particle physics & rendering
 │   ├── WindSystem.js         # Wind simulation
-│   ├── AccumulationSystem.js # Snow pile management
+│   ├── AccumulationSystem.js # Ground pile management
 │   └── BackgroundDetection.js # Adaptive color detection
 ├── ui/                        # UI components
 │   ├── components/
-│   │   ├── SnowButton.js     # Toggle button component
+│   │   ├── SnowButton.js     # Snow toggle button
+│   │   ├── FlowerButton.js   # Flower toggle button
+│   │   ├── AutumnButton.js   # Autumn toggle button
 │   │   └── WindControls.js   # Wind mode selector
 │   └── createSnowButton.js   # Component exports
 ├── config/
@@ -115,28 +133,31 @@ Optimized for performance and efficiency:
 
 ## 🎨 Wind Modes
 
+Wind modes apply to all effects (snow, flowers, autumn leaves):
+
 ### Calm Mode
 ```javascript
-UIEffects.setSnowWindMode('calm');
+UIEffects.setWindMode('calm');
 ```
-Gentle, peaceful snowfall - perfect for relaxing or minimalist designs.
+Gentle, peaceful particle fall - perfect for relaxing or minimalist designs.
 
 ### Windy Mode (Default)
 ```javascript
-UIEffects.setSnowWindMode('windy');
+UIEffects.setWindMode('windy');
 ```
-Moderate, natural snowfall with realistic wind drift.
+Moderate, natural particle movement with realistic wind drift.
 
 ### Blizzard Mode
 ```javascript
-UIEffects.setSnowWindMode('blizzard');
+UIEffects.setWindMode('blizzard');
 ```
-Intense, dramatic snowstorm with heavy wind and rapid motion.
+Intense, dramatic particle storm with heavy wind and rapid motion.
 
 ## 🔧 Customization
 
 ### Custom Configuration
 
+#### Snow Effect
 ```javascript
 import { SnowEffect } from 'ui-effects/src/core/SnowEffect.js';
 
@@ -148,6 +169,36 @@ const customSnow = new SnowEffect({
 });
 
 customSnow.start();
+```
+
+#### Flower Effect
+```javascript
+import { FlowerEffect } from 'ui-effects/src/core/FlowerEffect.js';
+
+const customFlowers = new FlowerEffect({
+  maxPetals: 1500,      // Number of petals
+  fallSpeedMin: 14,     // Minimum fall speed
+  fallSpeedMax: 42,     // Maximum fall speed
+  windStrength: 18,     // Wind magnitude
+  windEffect: 1.8       // Visual wind amplification
+});
+
+customFlowers.start();
+```
+
+#### Autumn Effect
+```javascript
+import { AutumnEffect } from 'ui-effects/src/core/AutumnEffect.js';
+
+const customAutumn = new AutumnEffect({
+  maxPetals: 1800,      // Number of leaves
+  fallSpeedMin: 20,     // Minimum fall speed
+  fallSpeedMax: 52,     // Maximum fall speed
+  windStrength: 26,     // Wind magnitude
+  windEffect: 2.0       // Visual wind amplification
+});
+
+customAutumn.start();
 ```
 
 ### Settings
@@ -205,25 +256,50 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## 💡 Common Examples
 
-### Auto-Start Snow on Load
+### Auto-Start Effects on Load
 
 ```javascript
 window.addEventListener('load', () => {
   UIEffects.startSnow();
-  UIEffects.setSnowWindMode('windy');
+  UIEffects.startFlowers();
+  UIEffects.startAutumn();
+  UIEffects.setWindMode('windy');
 });
 ```
 
-### Custom Toggle Button
+### Custom Toggle Buttons
 
 ```javascript
-const toggleBtn = document.getElementById('toggle-snow');
-toggleBtn.addEventListener('click', () => {
-  const metrics = UIEffects.getMetrics();
-  if (metrics) {
+// Snow toggle
+const snowBtn = document.getElementById('toggle-snow');
+snowBtn.addEventListener('click', () => {
+  const snow = UIEffects.effectManager.effects.snow;
+  if (snow.running) {
     UIEffects.stopSnow();
   } else {
     UIEffects.startSnow();
+  }
+});
+
+// Flower toggle
+const flowerBtn = document.getElementById('toggle-flowers');
+flowerBtn.addEventListener('click', () => {
+  const flowers = UIEffects.effectManager.effects.flowers;
+  if (flowers.running) {
+    UIEffects.stopFlowers();
+  } else {
+    UIEffects.startFlowers();
+  }
+});
+
+// Autumn toggle
+const autumnBtn = document.getElementById('toggle-autumn');
+autumnBtn.addEventListener('click', () => {
+  const autumn = UIEffects.effectManager.effects.autumn;
+  if (autumn.running) {
+    UIEffects.stopAutumn();
+  } else {
+    UIEffects.startAutumn();
   }
 });
 ```
@@ -249,6 +325,7 @@ const monitor = setInterval(() => {
 </div>
 
 <script>
+  // Initialize wind controls for all effects
   const snow = UIEffects.effectManager.effects.snow;
   UIEffects.initializeWindControls(snow);
 </script>
@@ -271,6 +348,11 @@ const monitor = setInterval(() => {
 - Verify background is a solid color or gradient
 - Ensure body element has computed background
 - Check browser DevTools computed styles
+
+**Which effect should I use?**
+- **Snow**: Winter themes, holiday seasons, cold atmospheres
+- **Flowers**: Spring themes, romantic contexts, soft aesthetics
+- **Autumn**: Fall themes, warm colors, seasonal transitions
 
 ## 📞 Support & Issues
 
