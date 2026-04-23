@@ -36,6 +36,9 @@ export class SnowEffect {
     // Engine state
     this.running = false;
     this.paused = false;
+    this.snowfallActive = true;
+    this.melting = false;
+    this.meltRate = options.meltRate || 6;
     this.lastTime = 0;
     this.raf = null;
 
@@ -64,8 +67,18 @@ export class SnowEffect {
   // ========================================================================
 
   start() {
-    if (this.running) return;
+    if (this.running) {
+      // If already in melt mode, resume snowfall without recreating canvas.
+      if (this.melting) {
+        this.melting = false;
+        this.snowfallActive = true;
+        this.particles.createFlakes(this.canvas.width, this.canvas.height);
+      }
+      return;
+    }
     this.running = true;
+    this.snowfallActive = true;
+    this.melting = false;
 
     // Browser support check
     if (!window.requestAnimationFrame) {
@@ -122,6 +135,8 @@ export class SnowEffect {
 
   stop() {
     this.running = false;
+    this.snowfallActive = false;
+    this.melting = false;
     if (this.raf) cancelAnimationFrame(this.raf);
 
     window.removeEventListener('resize', this.resize);
@@ -134,6 +149,13 @@ export class SnowEffect {
 
     this.canvas = null;
     this.ctx = null;
+  }
+
+  transitionToMelting() {
+    if (!this.running) return;
+    this.snowfallActive = false;
+    this.melting = true;
+    this.particles.clear();
   }
 
   handleVisibility() {
@@ -181,25 +203,34 @@ export class SnowEffect {
     this.wind.update(delta);
     this.updateFrameRate(delta);
 
-    // Update and draw particles
-    this.particles.updateAndDraw(
-      delta,
-      this.ctx,
-      {
-        gravity: this.gravity,
-        windCurrent: this.wind.getCurrent(),
-        windEffect: this.windEffect,
-        swingAmplitude: this.swingAmplitude,
-        snowColor: this.snowColor
-      },
-      this.accumulation.accumulation,
-      this.canvas.width,
-      this.canvas.height
-    );
+    // Update and draw particles only while active snowfall is enabled.
+    if (this.snowfallActive) {
+      this.particles.updateAndDraw(
+        delta,
+        this.ctx,
+        {
+          gravity: this.gravity,
+          windCurrent: this.wind.getCurrent(),
+          windEffect: this.windEffect,
+          swingAmplitude: this.swingAmplitude,
+          snowColor: this.snowColor
+        },
+        this.accumulation.accumulation,
+        this.canvas.width,
+        this.canvas.height
+      );
+    }
 
     // Update and draw accumulation (throttled for performance)
     if (this.accumulationFrameSkip++ % 6 === 0) {
       this.accumulation.smooth();
+    }
+    if (this.melting) {
+      this.accumulation.decay(this.meltRate * delta);
+      if (this.accumulation.getMaxHeight() <= 0.2) {
+        this.stop();
+        return;
+      }
     }
     this.accumulation.draw(this.ctx, this.canvas.width, this.canvas.height, this.snowColor);
 

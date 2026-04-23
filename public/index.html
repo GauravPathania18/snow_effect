@@ -21,12 +21,16 @@
   <script>
     // 1. Create the Let It Snow toggle button
     UIEffects.createSnowButton();
+    UIEffects.createFlowerButton();
+    UIEffects.createAutumnButton();
 
-    // 2. Access the snow instance
+    // 2. Access effect instances
     const snow = UIEffects.effectManager.effects.snow;
+    const flowers = UIEffects.effectManager.effects.flowers;
+    const autumn = UIEffects.effectManager.effects.autumn;
 
-    // 3. Initialize wind mode controls
-    UIEffects.initializeWindControls(snow);
+    // 3. Initialize wind mode controls for all seasonal effects
+    UIEffects.initializeWindControls([snow, flowers, autumn]);
   </script>
 
 </body>

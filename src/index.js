@@ -5,7 +5,11 @@
 
 import { effectManager } from './core/EffectManager.js';
 import { SnowEffect } from './core/SnowEffect.js';
+import { FlowerEffect } from './core/FlowerEffect.js';
+import { AutumnEffect } from './core/AutumnEffect.js';
 import { createSnowButton } from './ui/components/SnowButton.js';
+import { createFlowerButton } from './ui/components/FlowerButton.js';
+import { createAutumnButton } from './ui/components/AutumnButton.js';
 import { initializeWindControls } from './ui/components/WindControls.js';
 import { EFFECT_MODES } from './config/settings.js';
 
@@ -28,6 +32,8 @@ import { EFFECT_MODES } from './config/settings.js';
 
 // Initialize effect manager with snow effect
 effectManager.register('snow', new SnowEffect());
+effectManager.register('flowers', new FlowerEffect());
+effectManager.register('autumn', new AutumnEffect());
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
@@ -38,27 +44,38 @@ window.addEventListener('beforeunload', () => {
 // PUBLIC API
 // ============================================================================
 const snow = effectManager.effects.snow;
+const flowers = effectManager.effects.flowers;
+const autumn = effectManager.effects.autumn;
 
 export const UIEffects = {
   // UI Components
   createSnowButton,
+  createFlowerButton,
+  createAutumnButton,
   initializeWindControls,
   
   // Core instances
   effectManager,
   snow,
+  flowers,
+  autumn,
 
-  // Wind mode control
-  setSnowWindMode: (mode) => {
-    if (!snow) {
-      console.error('[UIEffects] Snow effect not initialized');
-      return;
-    }
+  setWindMode: (mode) => {
     if (!Object.values(EFFECT_MODES).includes(mode)) {
       console.warn(`[UIEffects] Invalid wind mode: ${mode}. Use 'calm', 'windy', or 'blizzard'`);
       return;
     }
-    snow.setWindMode(mode);
+
+    [snow, flowers, autumn].forEach(effect => {
+      if (effect && typeof effect.setWindMode === 'function') {
+        effect.setWindMode(mode);
+      }
+    });
+  },
+
+  // Wind mode control
+  setSnowWindMode: (mode) => {
+    UIEffects.setWindMode(mode);
   },
 
   // Start snow
@@ -69,6 +86,26 @@ export const UIEffects = {
   // Stop snow
   stopSnow: () => {
     effectManager.disable('snow');
+  },
+
+  // Start flowers
+  startFlowers: () => {
+    effectManager.enable('flowers');
+  },
+
+  // Stop flowers
+  stopFlowers: () => {
+    effectManager.disable('flowers');
+  },
+
+  // Start falling leaves
+  startAutumn: () => {
+    effectManager.enable('autumn');
+  },
+
+  // Stop falling leaves
+  stopAutumn: () => {
+    effectManager.disable('autumn');
   },
 
   // Get performance metrics for debugging
@@ -84,6 +121,8 @@ export const UIEffects = {
 // Export components
 export {
   createSnowButton,
+  createFlowerButton,
+  createAutumnButton,
   initializeWindControls,
   effectManager
 };

@@ -59,6 +59,17 @@ export class AccumulationSystem {
   }
 
   /**
+   * Decay accumulation naturally over time (melting effect)
+   */
+  decay(amount) {
+    if (!this.accumulation.length) return;
+    for (let i = 0; i < this.accumulation.length; i++) {
+      const next = this.accumulation[i] - amount;
+      this.accumulation[i] = next > 0 ? next : 0;
+    }
+  }
+
+  /**
    * Clear accumulation
    */
   clear() {
@@ -69,6 +80,7 @@ export class AccumulationSystem {
    * Get max accumulation height
    */
   getMaxHeight() {
+    if (!this.accumulation.length) return 0;
     return Math.max(...this.accumulation);
   }
 }

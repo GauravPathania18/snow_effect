@@ -1,6 +1,7 @@
 class EffectManager {
   constructor() {
     this.effects = {};
+    this.activeEffectName = null;
   }
 
   register(name, effect) {
@@ -18,7 +19,22 @@ class EffectManager {
       return;
     }
     try {
+      // Keep exactly one active primary effect.
+      for (const [otherName, otherEffect] of Object.entries(this.effects)) {
+        if (otherName === name || !otherEffect) continue;
+        if (!otherEffect.running) continue;
+
+        // Switching away from snow keeps accumulation and melts it naturally.
+        if (otherName === 'snow' && typeof otherEffect.transitionToMelting === 'function') {
+          otherEffect.transitionToMelting();
+        } else if (typeof otherEffect.stop === 'function') {
+          otherEffect.stop();
+        }
+      }
+
       effect.start();
+      this.activeEffectName = name;
+      this._emitStateChange();
     } catch (err) {
       console.error(`[EffectManager] Failed to enable '${name}':`, err);
     }
@@ -36,6 +52,10 @@ class EffectManager {
     }
     try {
       effect.stop();
+      if (this.activeEffectName === name) {
+        this.activeEffectName = null;
+      }
+      this._emitStateChange();
     } catch (err) {
       console.error(`[EffectManager] Failed to disable '${name}':`, err);
     }
@@ -49,10 +69,21 @@ class EffectManager {
           effect.stop();
         }
       }
+      this.activeEffectName = null;
+      this._emitStateChange();
       this.effects = {};
     } catch (err) {
       console.error('[EffectManager] Cleanup failed:', err);
     }
+  }
+
+  _emitStateChange() {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('uieffects:state-change', {
+        detail: { activeEffectName: this.activeEffectName }
+      })
+    );
   }
 }
 

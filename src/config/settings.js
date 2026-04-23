@@ -46,6 +46,12 @@ export const UI_CONFIG = {
   BUTTON_ID: 'ui-snow-button',
   BUTTON_CLASS: 'ui-snow-button',
   STORAGE_KEY: 'ui-snow',
+  FLOWER_BUTTON_ID: 'ui-flower-button',
+  FLOWER_BUTTON_CLASS: 'ui-flower-button',
+  FLOWER_STORAGE_KEY: 'ui-flowers',
+  AUTUMN_BUTTON_ID: 'ui-autumn-button',
+  AUTUMN_BUTTON_CLASS: 'ui-autumn-button',
+  AUTUMN_STORAGE_KEY: 'ui-autumn',
   CONTROLS_ID: 'snow-controls',
   WIND_CONTROL_SELECTOR: '#snow-controls button'
 };
@@ -53,5 +59,11 @@ export const UI_CONFIG = {
 export const MESSAGES = {
   SNOW_ON: '❄ Stop snow',
   SNOW_OFF: '❄ Let it snow',
-  ARIA_LABEL: 'Toggle snow effect'
+  ARIA_LABEL: 'Toggle snow effect',
+  FLOWERS_ON: '🌸 Stop flowers',
+  FLOWERS_OFF: '🌸 Let flowers fall',
+  FLOWERS_ARIA_LABEL: 'Toggle flower effect',
+  AUTUMN_ON: '🍂 Stop falling leaves',
+  AUTUMN_OFF: '🍂 Let leaves fall',
+  AUTUMN_ARIA_LABEL: 'Toggle falling leaves effect'
 };

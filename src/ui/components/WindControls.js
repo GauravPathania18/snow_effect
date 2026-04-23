@@ -5,9 +5,9 @@
 
 import { EFFECT_MODES } from '../../config/settings.js';
 
-export function initializeWindControls(snow) {
-  if (!snow) {
-    console.error('[WindControls] Snow effect instance not provided');
+export function initializeWindControls(target) {
+  if (!target) {
+    console.error('[WindControls] Wind target not provided');
     return;
   }
 
@@ -29,7 +29,12 @@ export function initializeWindControls(snow) {
       // Change wind mode
       const mode = btn.dataset.mode;
       if (Object.values(EFFECT_MODES).includes(mode)) {
-        snow.setWindMode(mode);
+        const targets = Array.isArray(target) ? target : [target];
+        targets.forEach(effect => {
+          if (effect && typeof effect.setWindMode === 'function') {
+            effect.setWindMode(mode);
+          }
+        });
       } else {
         console.warn(`[WindControls] Invalid wind mode: ${mode}`);
       }

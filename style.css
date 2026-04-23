@@ -2,7 +2,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(160deg, #1b2735 0%, #090a0f 100%);
+  background: linear-gradient(160deg, #11d6c6 0%, #090a0f 100%);
   overflow-x: hidden;
   font-family: Arial, sans-serif;
 }
@@ -29,18 +29,18 @@ body {
   border: none;
   cursor: pointer;
   color: white;
-  background: linear-gradient(135deg, #708acb, #a7b8e8);
+  background: linear-gradient(135deg, #3f75ff, #a7b8e8);
   transition: all 0.25s ease;
   font-weight: bold;
 }
 
 #snow-controls button:hover {
   transform: translateY(-4px);
-  background: linear-gradient(135deg, #8aa8f0, #d7e0fc);
+  background: linear-gradient(135deg, #5183f8, #d7e0fc);
 }
 
 #snow-controls button.active {
-  background: linear-gradient(135deg, #4a5fc1, #6b7ff0);
+  background: linear-gradient(135deg, #5183f8, #d7e0fc);
   box-shadow: 0 0 15px rgba(107, 127, 240, 0.6);
 }
 
@@ -81,6 +81,78 @@ body {
   outline-offset: 2px;
 }
 
+#ui-flower-button {
+  background: linear-gradient(135deg, #f38bb3, #ffc8db);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 14px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 20px;
+  right: 170px;
+  z-index: 10000;
+}
+
+#ui-flower-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(243, 139, 179, 0.4);
+}
+
+#ui-flower-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(243, 139, 179, 0.3);
+}
+
+#ui-flower-button:focus {
+  outline: 2px solid #d66b97;
+  outline-offset: 2px;
+}
+
+#ui-autumn-button {
+  background: linear-gradient(135deg, #cb6d28, #f5a65b);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 14px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 20px;
+  right: 335px;
+  z-index: 10000;
+}
+
+#ui-autumn-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(203, 109, 40, 0.45);
+}
+
+#ui-autumn-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(203, 109, 40, 0.3);
+}
+
+#ui-autumn-button:focus {
+  outline: 2px solid #a24d11;
+  outline-offset: 2px;
+}
+
 /* Wind mode controls - touch friendly */
 #snow-controls button {
   min-width: 44px; /* Touch-friendly minimum */
@@ -95,6 +167,18 @@ body {
   #ui-snow-button {
     padding: 6px 10px;
     font-size: 12px;
+  }
+
+  #ui-flower-button {
+    padding: 6px 10px;
+    font-size: 12px;
+    right: 150px;
+  }
+
+  #ui-autumn-button {
+    padding: 6px 10px;
+    font-size: 12px;
+    right: 290px;
   }
 
   #snow-controls button {
@@ -112,6 +196,20 @@ body {
     font-size: 11px !important;
   }
 
+  #ui-flower-button {
+    bottom: 8px !important;
+    right: 125px !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+
+  #ui-autumn-button {
+    bottom: 8px !important;
+    right: 240px !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+
   #snow-controls {
     top: 5px !important;
     right: 5px !important;
@@ -123,7 +221,9 @@ body {
 /* Print styles */
 @media print {
   #snow-controls,
-  #ui-snow-button {
+  #ui-snow-button,
+  #ui-flower-button,
+  #ui-autumn-button {
     display: none !important;
   }
 }

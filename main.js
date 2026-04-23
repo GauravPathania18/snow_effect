@@ -2,6 +2,8 @@
 try {
   // 1. Create the Let It Snow toggle button
   UIEffects.createSnowButton();
+  UIEffects.createFlowerButton();
+  UIEffects.createAutumnButton();
 
   // 2. Access the snow instance
   const snow = UIEffects.effectManager.effects.snow;
@@ -21,7 +23,7 @@ try {
         
         // Change wind mode
         const mode = btn.dataset.mode;
-        snow.setWindMode(mode);
+        UIEffects.setWindMode(mode);
       });
     });
 
