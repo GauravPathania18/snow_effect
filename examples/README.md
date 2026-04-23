@@ -7,16 +7,15 @@ This folder contains example implementations of UIEffects to help you get starte
 ### 1. Basic Example (`basic.html`)
 
 A simple implementation showing:
-- Creating toggle buttons for all effects (snow, flowers, autumn)
+- Creating the snow toggle button
 - Changing wind modes
 - Monitoring performance metrics
 - Basic styling
 
 **Features:**
 - Simple, clean UI
-- Toggle buttons for Snow, Flowers, and Autumn effects
 - Wind mode buttons (Calm, Windy, Blizzard)
-- Real-time performance metrics (FPS, particle count)
+- Real-time performance metrics (FPS, flake count)
 - Start/Stop controls
 
 **Use this when:**
@@ -27,7 +26,7 @@ A simple implementation showing:
 ### 2. Advanced Example (`advanced.html`)
 
 A comprehensive implementation showcasing:
-- Full programmatic control of all three effects
+- Full programmatic control
 - Event logging system
 - Automated sequences
 - Real-time metrics
@@ -39,7 +38,6 @@ A comprehensive implementation showcasing:
 - Demo sequence automation
 - Advanced state management
 - Performance monitoring
-- Individual effect controls
 
 **Use this when:**
 - Building a production application
@@ -105,34 +103,26 @@ document.getElementById('myButton').addEventListener('click', () => {
 All examples use these common UIEffects methods:
 
 ```javascript
-// Create toggle buttons for all effects
+// Create toggle button
 UIEffects.createSnowButton();
-UIEffects.createFlowerButton();
-UIEffects.createAutumnButton();
 
-// Control effects
+// Control snow
 UIEffects.startSnow();
 UIEffects.stopSnow();
-UIEffects.startFlowers();
-UIEffects.stopFlowers();
-UIEffects.startAutumn();
-UIEffects.stopAutumn();
 
-// Change wind mode (applies to all effects)
-UIEffects.setWindMode('calm');    // calm, windy, blizzard
-UIEffects.setWindMode('windy');
-UIEffects.setWindMode('blizzard');
+// Change wind mode
+UIEffects.setSnowWindMode('calm');    // calm, windy, blizzard
+UIEffects.setSnowWindMode('windy');
+UIEffects.setSnowWindMode('blizzard');
 
 // Get performance data
 const metrics = UIEffects.getMetrics();
 console.log(metrics.fps);           // Current FPS
 console.log(metrics.flakeCount);    // Particle count
-console.log(metrics.accumulationHeight); // Ground pile height
+console.log(metrics.accumulationHeight); // Snow pile height
 
-// Access effect instances
+// Access effects manager
 const snow = UIEffects.effectManager.effects.snow;
-const flowers = UIEffects.effectManager.effects.flowers;
-const autumn = UIEffects.effectManager.effects.autumn;
 
 // Initialize wind controls
 UIEffects.initializeWindControls(snow);
@@ -160,43 +150,19 @@ UIEffects.initializeWindControls(snow);
 
 ## Common Patterns
 
-### Toggle Effects with Custom Buttons
+### Toggle Snow with Custom Button
 
 ```javascript
-// Snow toggle
-const snowBtn = document.getElementById('snowBtn');
+const btn = document.getElementById('myBtn');
 let snowing = false;
-snowBtn.addEventListener('click', () => {
+
+btn.addEventListener('click', () => {
   if (snowing) {
     UIEffects.stopSnow();
   } else {
     UIEffects.startSnow();
   }
   snowing = !snowing;
-});
-
-// Flower toggle
-const flowerBtn = document.getElementById('flowerBtn');
-let flowering = false;
-flowerBtn.addEventListener('click', () => {
-  if (flowering) {
-    UIEffects.stopFlowers();
-  } else {
-    UIEffects.startFlowers();
-  }
-  flowering = !flowering;
-});
-
-// Autumn toggle
-const autumnBtn = document.getElementById('autumnBtn');
-let autumnRunning = false;
-autumnBtn.addEventListener('click', () => {
-  if (autumnRunning) {
-    UIEffects.stopAutumn();
-  } else {
-    UIEffects.startAutumn();
-  }
-  autumnRunning = !autumnRunning;
 });
 ```
 
@@ -214,12 +180,12 @@ setInterval(() => {
 ### Programmatic Wind Changes
 
 ```javascript
-// Change wind mode every 3 seconds (affects all effects)
+// Change wind mode every 3 seconds
 let modes = ['calm', 'windy', 'blizzard'];
 let current = 0;
 
 setInterval(() => {
-  UIEffects.setWindMode(modes[current]);
+  UIEffects.setSnowWindMode(modes[current]);
   current = (current + 1) % modes.length;
 }, 3000);
 ```
@@ -227,11 +193,9 @@ setInterval(() => {
 ### Conditional Initialization
 
 ```javascript
-// Only show effects on desktop
+// Only show snow on desktop
 if (window.innerWidth > 1024) {
   UIEffects.createSnowButton();
-  UIEffects.createFlowerButton();
-  UIEffects.createAutumnButton();
 }
 
 // Or respect user preferences
@@ -242,11 +206,10 @@ if (!window.matchMedia('(prefers-reduced-motion)').matches) {
 
 ## Troubleshooting
 
-### Effects not appearing?
+### Snow not appearing?
 - Check browser console for errors
 - Verify the script tag path is correct
 - Ensure DOM is ready before initializing
-- Check if effect is running: `UIEffects.effectManager.effects.snow.running`
 
 ### Performance issues?
 - Check `UIEffects.getMetrics()` for FPS
@@ -274,4 +237,4 @@ if (!window.matchMedia('(prefers-reduced-motion)').matches) {
 
 ---
 
-**Happy coding with UIEffects!** ❄️ 🌸 🍂
+**Happy coding with UIEffects!** ❄️
